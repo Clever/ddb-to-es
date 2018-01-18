@@ -1,0 +1,32 @@
+machine:
+  post:
+  - cd $HOME && git clone --depth 1 -v git@github.com:clever/ci-scripts.git && cd ci-scripts && git show --oneline -s
+  - $HOME/ci-scripts/circleci/golang-install 1.9
+  services:
+  - docker
+checkout:
+  post:
+  - $HOME/ci-scripts/circleci/golang-move-project
+compile:
+  override:
+  - make install_deps
+  - CMD=dynamodb APP_NAME=ddb-to-es make build
+test:
+  override:
+  - make test
+deployment:
+  master:
+    owner: Clever
+    commands:
+    - $HOME/ci-scripts/circleci/catapult-publish-lambda ddb-to-es
+    # TODO: comment these in once catapult changes are on master
+    #- $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es clever-dev confirm-then-deploy
+    #- $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es production confirm-then-deploy
+    branch: master
+  non-master:
+    owner: Clever
+    commands:
+    - $HOME/ci-scripts/circleci/catapult-publish-lambda ddb-to-es
+    branch: /^(?!master$).*$/
+general:
+  build_dir: ../.go_workspace/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME

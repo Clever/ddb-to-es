@@ -1,0 +1,11 @@
+[[constraint]]
+  branch = "master"
+  name = "github.com/aws/aws-lambda-go"
+
+[[constraint]]
+  name = "gopkg.in/Clever/kayvee-go.v6"
+  version = "6.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/stretchr/testify"
