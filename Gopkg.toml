@@ -9,3 +9,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/stretchr/testify"
+
+[[constraint]]
+  name = "gopkg.in/olivere/elastic.v6"
+  version = "6.1.4"
