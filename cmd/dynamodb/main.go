@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
+	"github.com/Clever/ddb-to-es/es"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"gopkg.in/Clever/kayvee-go.v6/logger"
@@ -16,11 +19,6 @@ var log = logger.New(os.Getenv("APP_NAME"))
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
-
-type Doc struct {
-	Op   string
-	Item interface{}
-}
 
 // Handler is your Lambda function handler.
 // The return signature can be empty, a single error, or a return value (struct or string) and error.
@@ -38,21 +36,25 @@ func main() {
 }
 
 func processRecords(records []events.DynamoDBEventRecord) error {
-	docs := []Doc{}
+	docs := []es.Doc{}
 
 	// TODO: we can parallalize this
 	for _, record := range records {
+		id, err := toId(record.Change.Keys)
+		if err != nil {
+			return err
+		}
 		item := map[string]interface{}{}
 		for k, v := range record.Change.NewImage {
-			item[k] = toDoc(v)
+			item[k] = toItem(v)
 		}
 		switch events.DynamoDBOperationType(record.EventName) {
 		case events.DynamoDBOperationTypeInsert:
-			docs = append(docs, Doc{"insert", item})
+			docs = append(docs, es.Doc{Op: "insert", Id: id, Item: item})
 		case events.DynamoDBOperationTypeModify:
-			docs = append(docs, Doc{"modify", item})
+			docs = append(docs, es.Doc{Op: "modify", Id: id, Item: item})
 		case events.DynamoDBOperationTypeRemove:
-			docs = append(docs, Doc{"delete", item})
+			docs = append(docs, es.Doc{Op: "delete", Id: id, Item: item})
 		case "":
 			continue
 		default:
@@ -69,18 +71,49 @@ func processRecords(records []events.DynamoDBEventRecord) error {
 	return nil
 }
 
-func toDoc(value events.DynamoDBAttributeValue) interface{} {
+func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
+	values := []string{}
+	for _, key := range ddbKeys {
+		item := toItem(key)
+		if key.DataType() == events.DataTypeMap ||
+			key.DataType() == events.DataTypeList ||
+			key.DataType() == events.DataTypeBinary ||
+			key.DataType() == events.DataTypeBinarySet ||
+			key.DataType() == events.DataTypeNumberSet ||
+			key.DataType() == events.DataTypeStringSet {
+
+			val, err := json.Marshal(item)
+			if err != nil {
+				return "", err
+			}
+			values = append(values, string(val[:]))
+		} else {
+			switch item.(type) {
+			case int:
+				// TODO: aws-sdk-go treats number as string
+			case string:
+				values = append(values, item.(string))
+			case bool:
+				values = append(values, strconv.FormatBool(item.(bool)))
+			}
+		}
+	}
+
+	return strings.Join(values, "|"), nil
+}
+
+func toItem(value events.DynamoDBAttributeValue) interface{} {
 	switch value.DataType() {
 	case events.DataTypeList:
 		doc := []interface{}{}
 		for _, item := range value.List() {
-			doc = append(doc, toDoc(item))
+			doc = append(doc, toItem(item))
 		}
 		return doc
 	case events.DataTypeMap:
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
-			doc[k] = toDoc(v)
+			doc[k] = toItem(v)
 		}
 		return doc
 	case events.DataTypeNull:
