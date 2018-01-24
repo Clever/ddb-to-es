@@ -32,6 +32,7 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 	return processRecords(event.Records, db)
 }
 
+// TODO: tmp fixthis
 func initDB() *es.DB {
 	dbConfig := &es.DBConfig{URL: os.Getenv("ELASTICSEARCH_URL")}
 	db, err := es.NewDB(dbConfig, log)
@@ -46,7 +47,7 @@ func initDB() *es.DB {
 }
 
 func main() {
-	db = initDB()
+	db = initDB() // TODO: initiate the DB as an interface and outside of main()
 	lambda.Start(Handler)
 }
 
