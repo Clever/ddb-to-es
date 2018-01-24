@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/Clever/kayvee-go"
+  packages = ["logger"]
+  revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
+  version = "v6.10.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/aws/aws-lambda-go"
   packages = ["events","lambda","lambda/messages","lambdacontext"]
@@ -82,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "15179d7ef3313a0da4aa8fa5c84f324b5f86d7d6ddb1024444a0010183c1cef1"
+  inputs-digest = "942e1c3abc35c12de2aa08eea30c8e5b669c1180cd8c6b861a31807e297e8725"
   solver-name = "gps-cdcl"
   solver-version = 1

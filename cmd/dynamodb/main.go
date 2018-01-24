@@ -16,6 +16,7 @@ import (
 )
 
 var log = logger.New(os.Getenv("APP_NAME"))
+var db *es.DB
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
@@ -28,14 +29,28 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 		return ErrNoRecords
 	}
 
-	return processRecords(event.Records)
+	return processRecords(event.Records, db)
+}
+
+func initDB() *es.DB {
+	dbConfig := &es.DBConfig{URL: os.Getenv("ELASTICSEARCH_URL")}
+	db, err := es.NewDB(dbConfig, log)
+	if err != nil {
+		log.ErrorD("elasticsearch-connect-error", logger.M{
+			"message": err.Error(),
+			"url":     dbConfig.URL,
+		})
+		os.Exit(1)
+	}
+	return db
 }
 
 func main() {
+	db = initDB()
 	lambda.Start(Handler)
 }
 
-func processRecords(records []events.DynamoDBEventRecord) error {
+func processRecords(records []events.DynamoDBEventRecord, db *es.DB) error {
 	docs := []es.Doc{}
 
 	// TODO: we can parallalize this
@@ -46,7 +61,7 @@ func processRecords(records []events.DynamoDBEventRecord) error {
 		}
 		item := map[string]interface{}{}
 		for k, v := range record.Change.NewImage {
-			item[k] = toItem(v)
+			item[santizeKey(k)] = toItem(v)
 		}
 		switch events.DynamoDBOperationType(record.EventName) {
 		case events.DynamoDBOperationTypeInsert:
@@ -89,8 +104,8 @@ func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 			values = append(values, string(val[:]))
 		} else {
 			switch item.(type) {
-			case int:
-				// TODO: aws-sdk-go treats number as string
+			//case int:
+			// TODO: aws-sdk-go treats number as string
 			case string:
 				values = append(values, item.(string))
 			case bool:
@@ -113,7 +128,7 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 	case events.DataTypeMap:
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
-			doc[k] = toItem(v)
+			doc[santizeKey(k)] = toItem(v)
 		}
 		return doc
 	case events.DataTypeNull:
@@ -136,4 +151,12 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 		return nil
 	}
 
+}
+
+func santizeKey(key string) string {
+	if _, ok := es.ESReservedFields[key]; ok {
+		// add another _ as prefix
+		return fmt.Sprintf("_%s", key)
+	}
+	return key
 }
