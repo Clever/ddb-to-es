@@ -4,6 +4,7 @@ machine:
   - $HOME/ci-scripts/circleci/golang-install 1.9
   services:
   - docker
+  - elasticsearch
 checkout:
   post:
   - $HOME/ci-scripts/circleci/golang-move-project
