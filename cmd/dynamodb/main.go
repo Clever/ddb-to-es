@@ -16,7 +16,7 @@ import (
 )
 
 var log = logger.New(os.Getenv("APP_NAME"))
-var db *es.DB
+var db es.DB
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
@@ -24,16 +24,12 @@ var ErrNoRecords = errors.New("no records contained in event")
 // Handler is your Lambda function handler.
 // The return signature can be empty, a single error, or a return value (struct or string) and error.
 func Handler(ctx context.Context, event events.DynamoDBEvent) error {
-	if len(event.Records) == 0 {
-		log.Error("no-records-found")
-		return ErrNoRecords
-	}
 
 	return processRecords(event.Records, db)
 }
 
 // TODO: tmp fixthis
-func initDB() *es.DB {
+func initDB() es.DB {
 	dbConfig := &es.DBConfig{URL: os.Getenv("ELASTICSEARCH_URL")}
 	db, err := es.NewDB(dbConfig, log)
 	if err != nil {
@@ -51,9 +47,13 @@ func main() {
 	lambda.Start(Handler)
 }
 
-func processRecords(records []events.DynamoDBEventRecord, db *es.DB) error {
-	docs := []es.Doc{}
+func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
+	if len(records) == 0 {
+		log.Error("no-records-found")
+		return ErrNoRecords
+	}
 
+	docs := []es.Doc{}
 	// TODO: we can parallalize this
 	for _, record := range records {
 		id, err := toId(record.Change.Keys)

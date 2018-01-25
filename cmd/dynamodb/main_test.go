@@ -1,16 +1,22 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
 
+	"github.com/Clever/ddb-to-es/es"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHandler(t *testing.T) {
+type MockDB struct{}
+
+func (db *MockDB) WriteDocs(docs []es.Doc) error {
+	return nil
+}
+
+func TestProcessRecords(t *testing.T) {
 	tests := []struct {
 		request events.DynamoDBEvent
 		err     error
@@ -28,7 +34,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := Handler(context.Background(), test.request)
+		err := processRecords(test.request.Records, &MockDB{})
 		assert.Equal(t, test.err, err)
 	}
 }

@@ -28,15 +28,25 @@ type DBConfig struct {
 	URL string
 }
 
-// DB exposes functionality to read and write from ElasticSearch
-type DB struct {
+type DB interface {
+	WriteDocs([]Doc) error
+}
+
+// Elasticsearch exposes functionality to read and write from ElasticSearch
+type Elasticsearch struct {
 	client *elastic.Client
 	config *DBConfig
 	lg     logger.KayveeLogger
 }
 
+type MockDB struct{}
+
+func (db *MockDB) WriteDocs(docs []Doc) error {
+	return nil
+}
+
 // NewDB creates a new DB instance
-func NewDB(config *DBConfig, lg logger.KayveeLogger) (*DB, error) {
+func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(config.URL),
 		elastic.SetSniff(false),
@@ -45,7 +55,7 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (*DB, error) {
 		return nil, fmt.Errorf("Could not connect to cluster: %s", err)
 	}
 
-	return &DB{
+	return &Elasticsearch{
 		client: client,
 		config: config,
 		lg:     lg,
@@ -58,7 +68,7 @@ type Doc struct {
 	Item interface{}
 }
 
-func (db *DB) WriteDocs(docs []Doc) error {
+func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
 	for _, doc := range docs {
