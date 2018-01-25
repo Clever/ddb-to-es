@@ -78,11 +78,13 @@ func processRecords(records []events.DynamoDBEventRecord, db *es.DB) error {
 		}
 	}
 
-	out, err := json.MarshalIndent(docs, "", " ")
+	err := db.WriteDocs(docs)
 	if err != nil {
+		// print out docs on error
+		out, _ := json.MarshalIndent(docs, "", " ")
+		fmt.Println(string(out[:]))
 		return err
 	}
-	fmt.Println(string(out[:]))
 
 	return nil
 }
