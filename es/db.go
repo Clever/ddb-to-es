@@ -39,12 +39,6 @@ type Elasticsearch struct {
 	lg     logger.KayveeLogger
 }
 
-type MockDB struct{}
-
-func (db *MockDB) WriteDocs(docs []Doc) error {
-	return nil
-}
-
 // NewDB creates a new DB instance
 func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 	client, err := elastic.NewClient(
