@@ -73,6 +73,10 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 		return nil
 	}
 
+	db.lg.InfoD("docs-to-write", logger.M{
+		"docs": docs,
+	})
+
 	resp, err := bulkRequest.Do(context.Background())
 	if err != nil {
 		db.lg.ErrorD("write-failed", logger.M{
