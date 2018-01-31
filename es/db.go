@@ -66,16 +66,20 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
 	for _, doc := range docs {
-		bulkRequest.Add(toESRequest(doc))
+		req := toESRequest(doc)
+		// TODO: handle nil (error) cases better. For now let's just keep going
+		if req != nil {
+			bulkRequest.Add(req)
+		}
 	}
 
 	if bulkRequest.NumberOfActions() == 0 {
 		return nil
 	}
 
-	db.lg.InfoD("docs-to-write", logger.M{
-		"docs": docs,
-	})
+	//db.lg.InfoD("docs-to-write", logger.M{
+	//"docs": docs,
+	//})
 
 	resp, err := bulkRequest.Do(context.Background())
 	if err != nil {
@@ -115,11 +119,12 @@ func toESRequest(doc Doc) elastic.BulkableRequest {
 	switch doc.Op {
 	case "insert":
 		fallthrough
-	case "update":
+	case "modify":
 		return elastic.NewBulkIndexRequest().Index("testing").Type("testing").Id(doc.Id).Doc(doc.Item)
 	case "delete":
 		return elastic.NewBulkDeleteRequest().Index("testing").Type("testing").Id(doc.Id)
 	default:
+		fmt.Printf("INVALID DOC TYPE %s; %s", doc.Op, doc.Id)
 		return nil
 	}
 }
