@@ -14,5 +14,5 @@ lambda:
       Type: DynamoDB
       Properties:
         Stream: arn:aws:dynamodb:us-west-1:589690932525:table/workflow-manager-prod-v3-workflows/stream/2017-12-07T23:33:03.914
-        StartingPosition: TRIM_HORIZON
         BatchSize: 100
+        StartingPosition: TRIM_HORIZON
