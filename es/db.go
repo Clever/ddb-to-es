@@ -92,11 +92,20 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 
 	// log all errors
 	for _, failed := range resp.Failed() {
-		db.lg.ErrorD("document-write-failed", logger.M{
-			"error-type":   failed.Error.Type,
-			"doc-id":       failed.Id,
-			"error-reason": failed.Error.Reason,
-		})
+
+		if failed.Error != nil {
+			db.lg.ErrorD("document-write-failed", logger.M{
+				"error-type":   failed.Error.Type,
+				"doc-id":       failed.Id,
+				"error-reason": failed.Error.Reason,
+			})
+		} else {
+			db.lg.ErrorD("document-write-failed", logger.M{
+				"error-type":   "UNKNOWN",
+				"doc-id":       failed.Id,
+				"error-reason": "UNKNOWN",
+			})
+		}
 	}
 
 	return fmt.Errorf("errors-during-write")
