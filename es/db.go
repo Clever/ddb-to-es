@@ -3,6 +3,7 @@ package es
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 	elastic "gopkg.in/olivere/elastic.v6"
@@ -122,13 +123,19 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 }
 
 func toESRequest(doc Doc) elastic.BulkableRequest {
+	// make sure we don't have invalid indexes
+	index := strings.ToLower(doc.Index)
+	if index == "" {
+		index = "unknown"
+	}
+
 	switch doc.Op {
 	case OpTypeInsert:
 		fallthrough
 	case OpTypeUpdate:
-		return elastic.NewBulkIndexRequest().Index(doc.Index).Type("default").Id(doc.Id).Doc(doc.Item)
+		return elastic.NewBulkIndexRequest().Index(index).Type("default").Id(doc.Id).Doc(doc.Item)
 	case OpTypeDelete:
-		return elastic.NewBulkDeleteRequest().Index(doc.Index).Type("default").Id(doc.Id)
+		return elastic.NewBulkDeleteRequest().Index(index).Type("default").Id(doc.Id)
 	default:
 		fmt.Printf("INVALID DOC TYPE %s; %s", doc.Op, doc.Id)
 		return nil

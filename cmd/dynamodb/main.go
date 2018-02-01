@@ -89,11 +89,11 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		}
 		switch events.DynamoDBOperationType(record.EventName) {
 		case events.DynamoDBOperationTypeInsert:
-			docs = append(docs, es.Doc{Op: es.OpTypeInsert, Id: id, Item: item})
+			docs = append(docs, es.Doc{Op: es.OpTypeInsert, Id: id, Item: item, Index: indexName(record)})
 		case events.DynamoDBOperationTypeModify:
-			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, Id: id, Item: item})
+			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, Id: id, Item: item, Index: indexName(record)})
 		case events.DynamoDBOperationTypeRemove:
-			docs = append(docs, es.Doc{Op: es.OpTypeDelete, Id: id, Item: item})
+			docs = append(docs, es.Doc{Op: es.OpTypeDelete, Id: id, Item: item, Index: indexName(record)})
 		case "":
 			continue
 		default:
@@ -188,7 +188,7 @@ func indexName(record events.DynamoDBEventRecord) string {
 			"record_id":           record.EventID,
 			"record_event_source": record.EventSourceArn,
 		})
-		return fmt.Sprintf("%sUNKNOWN", indexPrefix)
+		return fmt.Sprintf("%s-unknown-table-name", indexPrefix)
 	}
 
 	return fmt.Sprintf("%s%s", indexPrefix, results[1])
