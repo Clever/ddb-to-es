@@ -56,10 +56,21 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 	}, nil
 }
 
+// Models and Doc -> ES functionality
+
+type OpType string
+
+var (
+	OpTypeInsert OpType = "insert"
+	OpTypeUpdate OpType = "modify"
+	OpTypeDelete OpType = "delete"
+)
+
 type Doc struct {
-	Op   string
-	Id   string
-	Item interface{}
+	Op    OpType
+	Id    string
+	Index string
+	Item  interface{}
 }
 
 func (db *Elasticsearch) WriteDocs(docs []Doc) error {
@@ -77,10 +88,6 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 		return nil
 	}
 
-	//db.lg.InfoD("docs-to-write", logger.M{
-	//"docs": docs,
-	//})
-
 	resp, err := bulkRequest.Do(context.Background())
 	if err != nil {
 		db.lg.ErrorD("write-failed", logger.M{
@@ -96,7 +103,6 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 
 	// log all errors
 	for _, failed := range resp.Failed() {
-
 		if failed.Error != nil {
 			db.lg.ErrorD("document-write-failed", logger.M{
 				"error-type":   failed.Error.Type,
@@ -117,12 +123,12 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 
 func toESRequest(doc Doc) elastic.BulkableRequest {
 	switch doc.Op {
-	case "insert":
+	case OpTypeInsert:
 		fallthrough
-	case "modify":
-		return elastic.NewBulkIndexRequest().Index("testing").Type("testing").Id(doc.Id).Doc(doc.Item)
-	case "delete":
-		return elastic.NewBulkDeleteRequest().Index("testing").Type("testing").Id(doc.Id)
+	case OpTypeUpdate:
+		return elastic.NewBulkIndexRequest().Index(doc.Index).Type("default").Id(doc.Id).Doc(doc.Item)
+	case OpTypeDelete:
+		return elastic.NewBulkDeleteRequest().Index(doc.Index).Type("default").Id(doc.Id)
 	default:
 		fmt.Printf("INVALID DOC TYPE %s; %s", doc.Op, doc.Id)
 		return nil

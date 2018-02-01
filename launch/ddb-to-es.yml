@@ -2,6 +2,8 @@ run:
   type: lambda/us-west-1
 env:
   - ELASTICSEARCH_URL
+  - INDEX_PREFIX
+  - FAIL_ON_ERROR
 resources:
   max_mem: 0.128
 shepherds:

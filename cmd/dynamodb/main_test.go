@@ -39,6 +39,30 @@ func TestProcessRecords(t *testing.T) {
 	}
 }
 
+func TestIndexNameParsing(t *testing.T) {
+	tests := []struct {
+		arn   events.DynamoDBEventRecord
+		table string
+	}{
+		{
+			arn: events.DynamoDBEventRecord{
+				EventSourceArn: "arn:aws:dynamodb:us-west-2:account-id:table/ExampleTableWithStream/stream/2015-06-27T00:48:05.899",
+			},
+			table: "ExampleTableWithStream",
+		},
+		{
+			arn: events.DynamoDBEventRecord{
+				EventSourceArn: "arn:aws:dynamodb:us-west-1:589:table/workflow-manager-prod-workflows/stream/2017-12-07T23:33:03.914",
+			},
+			table: "workflow-manager-prod-workflows",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, indexName(test.arn), test.table)
+	}
+}
+
 func loadDynamoDBEvent(t *testing.T) events.DynamoDBEvent {
 	// 1. read JSON from file
 	inputJson := readJsonFromFile(t, "./testdata/dynamodb-event.json")
