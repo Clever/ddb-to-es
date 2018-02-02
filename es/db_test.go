@@ -23,7 +23,7 @@ func TestWriteDocs(t *testing.T) {
 			docs: []Doc{
 				Doc{
 					Op: "insert",
-					Id: "data|binary",
+					ID: "data|binary",
 					Item: map[string]interface{}{
 						"hello": "there",
 						"boo":   1,
@@ -45,7 +45,7 @@ func TestWriteDocs(t *testing.T) {
 
 func TestWriteDocsComplexBatch(t *testing.T) {
 	docs := &[]Doc{}
-	err := json.Unmarshal([]byte(docsJson), docs)
+	err := json.Unmarshal([]byte(docsJSON), docs)
 	assert.NoError(t, err)
 
 	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, logger.New("test"))
@@ -55,9 +55,9 @@ func TestWriteDocsComplexBatch(t *testing.T) {
 }
 
 // a complex document pulled from a test DynamoDB stream
-var docsJson = `[{
+var docsJSON = `[{
             "Op": "modify",
-            "Id": "0bf37be0-56bc-4164-8cd1-7de725be01af",
+            "ID": "0bf37be0-56bc-4164-8cd1-7de725be01af",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:39:02.015286312Z",
@@ -345,7 +345,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "7a07b4e9-9b96-4b06-8ddc-9c6eb64006ce",
+            "ID": "7a07b4e9-9b96-4b06-8ddc-9c6eb64006ce",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:41:59.06380604Z",
@@ -633,7 +633,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "83a5b3c5-123c-4ded-b065-cb30a2d0004c",
+            "ID": "83a5b3c5-123c-4ded-b065-cb30a2d0004c",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:41:33.822233885Z",
@@ -921,7 +921,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "06f9a831-9d1a-45ab-bf7a-1ff52a0240f7",
+            "ID": "06f9a831-9d1a-45ab-bf7a-1ff52a0240f7",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:42:03.581024938Z",
@@ -1209,7 +1209,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "b1dd41a6-18d7-4399-b5a0-6a607c60138d",
+            "ID": "b1dd41a6-18d7-4399-b5a0-6a607c60138d",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:41:59.412706666Z",
@@ -1497,7 +1497,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "7a07b4e9-9b96-4b06-8ddc-9c6eb64006ce",
+            "ID": "7a07b4e9-9b96-4b06-8ddc-9c6eb64006ce",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:41:59.06380604Z",
@@ -1785,7 +1785,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "c1b9124f-fa2f-4156-83c7-e5ffa7bd3f27",
+            "ID": "c1b9124f-fa2f-4156-83c7-e5ffa7bd3f27",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:41:59.2254977Z",
@@ -2073,22 +2073,22 @@ var docsJson = `[{
         },
         {
             "Op": "delete",
-            "Id": "cdb6a76d-60cb-4d72-95fc-c944a7433a3a",
+            "ID": "cdb6a76d-60cb-4d72-95fc-c944a7433a3a",
             "Item": {}
         },
         {
             "Op": "delete",
-            "Id": "42c62471-6c1a-41c0-8e2a-096f21b0e199",
+            "ID": "42c62471-6c1a-41c0-8e2a-096f21b0e199",
             "Item": {}
         },
         {
             "Op": "delete",
-            "Id": "2f4783f0-f037-4f9a-ac03-fccc78f6f603",
+            "ID": "2f4783f0-f037-4f9a-ac03-fccc78f6f603",
             "Item": {}
         },
         {
             "Op": "modify",
-            "Id": "06f9a831-9d1a-45ab-bf7a-1ff52a0240f7",
+            "ID": "06f9a831-9d1a-45ab-bf7a-1ff52a0240f7",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:42:03.581024938Z",
@@ -2376,7 +2376,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "b1dd41a6-18d7-4399-b5a0-6a607c60138d",
+            "ID": "b1dd41a6-18d7-4399-b5a0-6a607c60138d",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:41:59.412706666Z",
@@ -2664,7 +2664,7 @@ var docsJson = `[{
         },
         {
             "Op": "modify",
-            "Id": "9fa43d01-bd32-4860-a5bb-41a21fe05dff",
+            "ID": "9fa43d01-bd32-4860-a5bb-41a21fe05dff",
             "Item": {
                 "Workflow": {
                     "createdAt": "2018-01-31T01:42:17.414758833Z",

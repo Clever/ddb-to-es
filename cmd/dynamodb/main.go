@@ -16,13 +16,13 @@ import (
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
-// use env vars
 var log = logger.New(os.Getenv("APP_NAME"))
 var indexPattern = regexp.MustCompile("arn:aws:dynamodb:.*?:.*?:table/([0-9a-zA-Z_-]+)/.+")
 
-var failOnError bool
-var indexPrefix string
-var db es.DB
+// FailOnError specifies if to only log errors or to also return to lambda
+var FailOnError bool
+var IndexPrefix string
+var DBClient es.DB
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
@@ -30,29 +30,28 @@ var ErrNoRecords = errors.New("no records contained in event")
 // Handler is your Lambda function handler.
 // The return signature can be empty, a single error, or a return value (struct or string) and error.
 func Handler(ctx context.Context, event events.DynamoDBEvent) error {
-	err := processRecords(event.Records, db)
-	if err != nil {
-		if failOnError {
+	if err := processRecords(event.Records, DBClient); err != nil {
+		if FailOnError {
 			return err
 		}
-		log.Error("failed-process-records-but-continue")
+		log.ErrorD("failed-process-records-but-continue", logger.M{
+			"message": err.Error(),
+		})
 	}
 
 	return nil
 }
 
-func initFromEnv() {
+func main() {
 	var err error
-	if failOnError, err = strconv.ParseBool(os.Getenv("FAIL_ON_ERROR")); err != nil {
-		failOnError = false
+	if FailOnError, err = strconv.ParseBool(os.Getenv("FAIL_ON_ERROR")); err != nil {
+		FailOnError = false
 	}
-	indexPrefix = os.Getenv("INDEX_PREFIX")
-}
+	IndexPrefix = os.Getenv("INDEX_PREFIX")
+	esURL := os.Getenv("ELASTICSEARCH_URL")
 
-// TODO: is this the right place to do this?
-func initDB() es.DB {
-	dbConfig := &es.DBConfig{URL: os.Getenv("ELASTICSEARCH_URL")}
-	db, err := es.NewDB(dbConfig, log)
+	dbConfig := &es.DBConfig{URL: esURL}
+	DBClient, err = es.NewDB(dbConfig, log)
 	if err != nil {
 		log.ErrorD("elasticsearch-connect-error", logger.M{
 			"message": err.Error(),
@@ -60,19 +59,13 @@ func initDB() es.DB {
 		})
 		os.Exit(1)
 	}
-	return db
-}
 
-func main() {
-	initFromEnv()
-
-	db = initDB() // TODO: initiate the DB as an interface and outside of main()?
 	lambda.Start(Handler)
 }
 
+// processRecords converts DynamoDB stream records to es.Doc and writes them to the db
 func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 	if len(records) == 0 {
-		log.Error("no-records-found")
 		return ErrNoRecords
 	}
 
@@ -89,11 +82,11 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		}
 		switch events.DynamoDBOperationType(record.EventName) {
 		case events.DynamoDBOperationTypeInsert:
-			docs = append(docs, es.Doc{Op: es.OpTypeInsert, Id: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeInsert, ID: id, Item: item, Index: indexName(record)})
 		case events.DynamoDBOperationTypeModify:
-			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, Id: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, ID: id, Item: item, Index: indexName(record)})
 		case events.DynamoDBOperationTypeRemove:
-			docs = append(docs, es.Doc{Op: es.OpTypeDelete, Id: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeDelete, ID: id, Item: item, Index: indexName(record)})
 		case "":
 			continue
 		default:
@@ -101,8 +94,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		}
 	}
 
-	err := db.WriteDocs(docs)
-	if err != nil {
+	if err := db.WriteDocs(docs); err != nil {
 		// print out docs on error
 		out, _ := json.Marshal(docs)
 		fmt.Println(string(out[:]))
@@ -112,6 +104,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 	return nil
 }
 
+// toId generates a deterministic Id for each record
 func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 	values := []string{}
 	for _, key := range ddbKeys {
@@ -143,6 +136,8 @@ func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 	return strings.Join(values, "|"), nil
 }
 
+// toItem recursively walks through DynamoDBAttributeValue
+// to convert it to a standard object
 func toItem(value events.DynamoDBAttributeValue) interface{} {
 	switch value.DataType() {
 	case events.DataTypeList:
@@ -188,12 +183,13 @@ func indexName(record events.DynamoDBEventRecord) string {
 			"record_id":           record.EventID,
 			"record_event_source": record.EventSourceArn,
 		})
-		return fmt.Sprintf("%s-unknown-table-name", indexPrefix)
+		return fmt.Sprintf("%s-unknown-table-name", IndexPrefix)
 	}
 
-	return fmt.Sprintf("%s%s", indexPrefix, results[1])
+	return fmt.Sprintf("%s%s", IndexPrefix, results[1])
 }
 
+// santizeKey makes sure that document keys meet Elasticsearch requirements
 func santizeKey(key string) string {
 	if _, ok := es.ESReservedFields[key]; ok {
 		// add another _ as prefix

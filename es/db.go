@@ -24,11 +24,29 @@ var ESReservedFields = map[string]bool{
 	"_ttl":        true,
 }
 
+// OpType specifies the kind of operation a Doc represents
+type OpType string
+
+var (
+	OpTypeInsert OpType = "insert"
+	OpTypeUpdate OpType = "modify"
+	OpTypeDelete OpType = "delete"
+)
+
+// Doc is a representation of an object that can be written via the DB interface
+type Doc struct {
+	Op    OpType
+	ID    string
+	Index string
+	Item  interface{}
+}
+
 // DBConfig specifies how the client should connect to ElasticSearch
 type DBConfig struct {
 	URL string
 }
 
+// DB allows for the writing Doc's to a backend
 type DB interface {
 	WriteDocs([]Doc) error
 }
@@ -57,23 +75,7 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 	}, nil
 }
 
-// Models and Doc -> ES functionality
-
-type OpType string
-
-var (
-	OpTypeInsert OpType = "insert"
-	OpTypeUpdate OpType = "modify"
-	OpTypeDelete OpType = "delete"
-)
-
-type Doc struct {
-	Op    OpType
-	Id    string
-	Index string
-	Item  interface{}
-}
-
+// WriteDocs implements the writing Doc's to elasticsearch as a batch
 func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
@@ -133,11 +135,11 @@ func toESRequest(doc Doc) elastic.BulkableRequest {
 	case OpTypeInsert:
 		fallthrough
 	case OpTypeUpdate:
-		return elastic.NewBulkIndexRequest().Index(index).Type("default").Id(doc.Id).Doc(doc.Item)
+		return elastic.NewBulkIndexRequest().Index(index).Type("default").Id(doc.ID).Doc(doc.Item)
 	case OpTypeDelete:
-		return elastic.NewBulkDeleteRequest().Index(index).Type("default").Id(doc.Id)
+		return elastic.NewBulkDeleteRequest().Index(index).Type("default").Id(doc.ID)
 	default:
-		fmt.Printf("INVALID DOC TYPE %s; %s", doc.Op, doc.Id)
+		fmt.Printf("INVALID DOC TYPE %s; %s", doc.Op, doc.ID)
 		return nil
 	}
 }

@@ -65,22 +65,16 @@ func TestIndexNameParsing(t *testing.T) {
 
 func loadDynamoDBEvent(t *testing.T) events.DynamoDBEvent {
 	// 1. read JSON from file
-	inputJson := readJsonFromFile(t, "./testdata/dynamodb-event.json")
+	inputJson, err := ioutil.ReadFile("./testdata/dynamodb-event.json")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// 2. de-serialize into Go object
 	var inputEvent events.DynamoDBEvent
-	if err := json.Unmarshal(inputJson, &inputEvent); err != nil {
+	if err = json.Unmarshal(inputJson, &inputEvent); err != nil {
 		t.Errorf("could not unmarshal event. details: %v", err)
 	}
 
 	return inputEvent
-}
-
-func readJsonFromFile(t *testing.T, inputFile string) []byte {
-	inputJson, err := ioutil.ReadFile(inputFile)
-	if err != nil {
-		t.Errorf("could not open test file. details: %v", err)
-	}
-
-	return inputJson
 }
