@@ -4,6 +4,7 @@ env:
   - ELASTICSEARCH_URL
   - INDEX_PREFIX
   - FAIL_ON_ERROR
+  - DYNAMODB_STREAM_ARN
 resources:
   max_mem: 0.128
 shepherds:
@@ -15,6 +16,6 @@ lambda:
     ProcessDynamoDBStream:
       Type: DynamoDB
       Properties:
-        Stream: arn:aws:dynamodb:us-west-1:589690932525:table/workflow-manager-prod-v3-workflows/stream/2017-12-07T23:33:03.914
+        Stream: "${DYNAMODB_STREAM_ARN}"
         BatchSize: 100
         StartingPosition: LATEST
