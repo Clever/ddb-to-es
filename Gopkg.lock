@@ -2,16 +2,40 @@
 
 
 [[projects]]
+  name = "github.com/Clever/kayvee-go"
+  packages = ["logger"]
+  revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
+  version = "v6.10.0"
+
+[[projects]]
+  branch = "master"
   name = "github.com/aws/aws-lambda-go"
   packages = ["events","lambda","lambda/messages","lambdacontext"]
-  revision = "28a6e9fa1fc02d45d9a8c0a8d22c7d5c3580aa03"
-  version = "v1.0.0"
+  revision = "6b9a1075bdff82af84679480193c4aa8c68db4f4"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mailru/easyjson"
+  packages = [".","buffer","jlexer","jwriter"]
+  revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
+
+[[projects]]
+  name = "github.com/olivere/elastic"
+  packages = ["config","uritemplates"]
+  revision = "c51e74f9bcab8906a2f6cf5660dac396ba51b3d6"
+  version = "v6.1.4"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -50,6 +74,12 @@
   version = "v6.10.0"
 
 [[projects]]
+  name = "gopkg.in/olivere/elastic.v6"
+  packages = ["."]
+  revision = "c51e74f9bcab8906a2f6cf5660dac396ba51b3d6"
+  version = "v6.1.4"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -58,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "44e5218edcad2bda6a8a3236cc3a272fc756bb523c8c1f0431a4743f9665f5b5"
+  inputs-digest = "942e1c3abc35c12de2aa08eea30c8e5b669c1180cd8c6b861a31807e297e8725"
   solver-name = "gps-cdcl"
   solver-version = 1
