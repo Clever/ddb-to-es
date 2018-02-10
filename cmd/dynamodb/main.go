@@ -78,7 +78,9 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		}
 		item := map[string]interface{}{}
 		for k, v := range record.Change.NewImage {
-			item[santizeKey(k)] = toItem(v)
+			if i := toItem(v); i != nil {
+				item[santizeKey(k)] = i
+			}
 		}
 		switch events.DynamoDBOperationType(record.EventName) {
 		case events.DynamoDBOperationTypeInsert:
@@ -143,17 +145,21 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 	case events.DataTypeList:
 		doc := []interface{}{}
 		for _, item := range value.List() {
-			doc = append(doc, toItem(item))
+			if i := toItem(item); i != nil {
+				doc = append(doc, i)
+			}
 		}
 		return doc
 	case events.DataTypeMap:
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
-			doc[santizeKey(k)] = toItem(v)
+			if i := toItem(v); i != nil {
+				doc[santizeKey(k)] = i
+			}
 		}
 		return doc
 	case events.DataTypeNull:
-		return value.IsNull()
+		return nil
 	case events.DataTypeNumber:
 		return value.Number()
 	case events.DataTypeNumberSet:
