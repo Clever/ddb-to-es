@@ -16,7 +16,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/golang/mock"
-  packages = ["mockgen","mockgen/model"]
+  packages = ["gomock","mockgen","mockgen/model"]
   revision = "58cd061d09382b6011f84c1291ebe50ef2e25bab"
 
 [[projects]]
@@ -68,6 +68,12 @@
   revision = "511d08a359d14c0dd9c4302af52ee9abb6f93c2a"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
+
+[[projects]]
   name = "gopkg.in/Clever/kayvee-go.v6"
   packages = [".","logger","router"]
   revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
@@ -88,6 +94,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b4b61c89cd78fa6a6123ea52089e73a6b342f42a6e6c8b09206aba96a99edb67"
+  inputs-digest = "c1e4d63477b66e11b0480b4a66ae96dd30deea2fa3f1228b794fde088254e234"
   solver-name = "gps-cdcl"
   solver-version = 1
