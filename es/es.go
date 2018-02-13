@@ -41,25 +41,25 @@ type Doc struct {
 	Item  interface{}
 }
 
-// DBConfig specifies how the client should connect to ElasticSearch
-type DBConfig struct {
+// Config specifies how the client should connect to ElasticSearch
+type Config struct {
 	URL string
 }
 
-// DB allows for the writing Doc's to a backend
-type DB interface {
+// ES allows for the writing Doc's to Elasticsearch
+type ES interface {
 	WriteDocs(context.Context, []Doc) error
 }
 
 // Elasticsearch exposes functionality to read and write from ElasticSearch
-type Elasticsearch struct {
+type elasticsearch struct {
 	client *elastic.Client
-	config *DBConfig
+	config *Config
 	lg     logger.KayveeLogger
 }
 
 // NewDB creates a new DB instance
-func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
+func New(config *Config, lg logger.KayveeLogger) (ES, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(config.URL),
 		elastic.SetSniff(false),
@@ -68,7 +68,7 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 		return nil, fmt.Errorf("Could not connect to cluster: %s", err)
 	}
 
-	return &Elasticsearch{
+	return &elasticsearch{
 		client: client,
 		config: config,
 		lg:     lg,
@@ -76,7 +76,7 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 }
 
 // WriteDocs implements the writing Doc's to elasticsearch as a batch
-func (db *Elasticsearch) WriteDocs(ctx context.Context, docs []Doc) error {
+func (db *elasticsearch) WriteDocs(ctx context.Context, docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
 	for _, doc := range docs {

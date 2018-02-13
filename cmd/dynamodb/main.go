@@ -24,7 +24,7 @@ var IndexPattern = regexp.MustCompile("arn:aws:dynamodb:.*?:.*?:table/([0-9a-zA-
 // FailOnError specifies if to only log errors or to also return to lambda
 var FailOnError bool
 var IndexPrefix string
-var DBClient es.DB
+var ESClient es.ES
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
@@ -38,12 +38,12 @@ func main() {
 	IndexPrefix = os.Getenv("INDEX_PREFIX")
 	esURL := os.Getenv("ELASTICSEARCH_URL")
 
-	dbConfig := &es.DBConfig{URL: esURL}
-	DBClient, err = es.NewDB(dbConfig, log)
+	esConfig := &es.Config{URL: esURL}
+	ESClient, err = es.New(esConfig, log)
 	if err != nil {
 		log.ErrorD("elasticsearch-connect-error", logger.M{
 			"message": err.Error(),
-			"url":     dbConfig.URL,
+			"url":     esConfig.URL,
 		})
 		os.Exit(1)
 	}
@@ -59,7 +59,7 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 	if lambdacontext, ok := lambdacontext.FromContext(ctx); ok {
 		logger.FromContext(ctx).AddContext("aws_request_id", lambdacontext.AwsRequestID)
 	}
-	if err := processRecords(ctx, event.Records, DBClient); err != nil {
+	if err := processRecords(ctx, event.Records, ESClient); err != nil {
 		if FailOnError {
 			return err
 		}
@@ -72,7 +72,7 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 }
 
 // processRecords converts DynamoDB stream records to es.Doc and writes them to the db
-func processRecords(ctx context.Context, records []events.DynamoDBEventRecord, db es.DB) error {
+func processRecords(ctx context.Context, records []events.DynamoDBEventRecord, db es.ES) error {
 	if len(records) == 0 {
 		return ErrNoRecords
 	}
@@ -210,4 +210,5 @@ func indexName(record events.DynamoDBEventRecord) (string, error) {
 	}
 
 	return fmt.Sprintf("%s%s", IndexPrefix, results[1]), nil
+
 }

@@ -8,35 +8,54 @@ import (
 
 	"github.com/Clever/ddb-to-es/es"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
-type MockDB struct{}
+// TestHandler verifies end-to-end functionality using elastic mocks
+func TestHandler(t *testing.T) {
 
-func (db *MockDB) WriteDocs(docs []es.Doc) error {
-	return nil
 }
 
 func TestProcessRecords(t *testing.T) {
 	tests := []struct {
+		name    string
 		request events.DynamoDBEvent
 		err     error
+		esMock  func(*es.MockES)
 	}{
 		{
+			name:    "success",
 			request: loadDynamoDBEvent(t),
 			err:     nil,
+			esMock: func(mockES *es.MockES) {
+				mockES.EXPECT().
+					WriteDocs(gomock.Any(), gomock.Any()).Return(nil)
+			},
 		},
 		{
+			name: "empty records",
 			request: events.DynamoDBEvent{
 				Records: []events.DynamoDBEventRecord{},
 			},
 			err: ErrNoRecords,
+			esMock: func(mockES *es.MockES) {
+				mockES.EXPECT().
+					WriteDocs(gomock.Any(), gomock.Any()).Times(0)
+			},
 		},
 	}
 
 	for _, test := range tests {
-		err := processRecords(context.TODO(), test.request.Records, &MockDB{})
-		assert.Equal(t, test.err, err)
+		t.Run(test.name, func(subt *testing.T) {
+			mockController := gomock.NewController(subt)
+			defer mockController.Finish()
+			mockES := es.NewMockES(mockController)
+			test.esMock(mockES)
+
+			err := processRecords(context.TODO(), test.request.Records, mockES)
+			assert.Equal(subt, test.err, err)
+		})
 	}
 }
 
@@ -60,7 +79,9 @@ func TestIndexNameParsing(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		assert.Equal(t, indexName(test.arn), test.table)
+		name, err := indexName(test.arn)
+		assert.NoError(t, err)
+		assert.Equal(t, name, test.table)
 	}
 }
 
