@@ -1,6 +1,7 @@
 package es
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -34,11 +35,11 @@ func TestWriteDocs(t *testing.T) {
 		},
 	}
 
-	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, logger.New("test"))
+	client, err := New(&Config{URL: "http://localhost:9200"}, logger.New("test"))
 	assert.NoError(t, err)
 
 	for _, test := range tests {
-		err = db.WriteDocs(test.docs)
+		err = client.WriteDocs(context.Background(), test.docs)
 		assert.NoError(t, err)
 	}
 }
@@ -48,9 +49,9 @@ func TestWriteDocsComplexBatch(t *testing.T) {
 	err := json.Unmarshal([]byte(docsJSON), docs)
 	assert.NoError(t, err)
 
-	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, logger.New("test"))
+	db, err := New(&Config{URL: "http://localhost:9200"}, logger.New("test"))
 	assert.NoError(t, err)
-	err = db.WriteDocs(*docs)
+	err = db.WriteDocs(context.Background(), *docs)
 	assert.NoError(t, err)
 }
 

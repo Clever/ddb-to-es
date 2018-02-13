@@ -13,36 +13,24 @@ import (
 	"github.com/Clever/ddb-to-es/es"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
-var log = logger.New(os.Getenv("APP_NAME"))
-var indexPattern = regexp.MustCompile("arn:aws:dynamodb:.*?:.*?:table/([0-9a-zA-Z_-]+)/.+")
+// AppName is application name provided by catapult
+var AppName = os.Getenv("APP_NAME")
+var IndexPattern = regexp.MustCompile("arn:aws:dynamodb:.*?:.*?:table/([0-9a-zA-Z_-]+)/.+")
 
 // FailOnError specifies if to only log errors or to also return to lambda
 var FailOnError bool
 var IndexPrefix string
-var DBClient es.DB
+var ESClient es.ES
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
 
-// Handler is your Lambda function handler.
-// The return signature can be empty, a single error, or a return value (struct or string) and error.
-func Handler(ctx context.Context, event events.DynamoDBEvent) error {
-	if err := processRecords(event.Records, DBClient); err != nil {
-		if FailOnError {
-			return err
-		}
-		log.ErrorD("failed-process-records-but-continue", logger.M{
-			"message": err.Error(),
-		})
-	}
-
-	return nil
-}
-
 func main() {
+	log := logger.New(AppName)
 	var err error
 	if FailOnError, err = strconv.ParseBool(os.Getenv("FAIL_ON_ERROR")); err != nil {
 		FailOnError = false
@@ -50,12 +38,12 @@ func main() {
 	IndexPrefix = os.Getenv("INDEX_PREFIX")
 	esURL := os.Getenv("ELASTICSEARCH_URL")
 
-	dbConfig := &es.DBConfig{URL: esURL}
-	DBClient, err = es.NewDB(dbConfig, log)
+	esConfig := &es.Config{URL: esURL}
+	ESClient, err = es.New(esConfig, log)
 	if err != nil {
 		log.ErrorD("elasticsearch-connect-error", logger.M{
 			"message": err.Error(),
-			"url":     dbConfig.URL,
+			"url":     esConfig.URL,
 		})
 		os.Exit(1)
 	}
@@ -63,13 +51,34 @@ func main() {
 	lambda.Start(Handler)
 }
 
+// Handler is your Lambda function handler.
+// The return signature can be empty, a single error, or a return value (struct or string) and error.
+func Handler(ctx context.Context, event events.DynamoDBEvent) error {
+	// create a request specific logger, with lambda request id
+	ctx = logger.NewContext(ctx, logger.New(AppName))
+	if lambdacontext, ok := lambdacontext.FromContext(ctx); ok {
+		logger.FromContext(ctx).AddContext("aws_request_id", lambdacontext.AwsRequestID)
+	}
+	if err := processRecords(ctx, event.Records, ESClient); err != nil {
+		if FailOnError {
+			return err
+		}
+		logger.FromContext(ctx).ErrorD("failed-process-records-but-continue", logger.M{
+			"message": err.Error(),
+		})
+	}
+
+	return nil
+}
+
 // processRecords converts DynamoDB stream records to es.Doc and writes them to the db
-func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
+func processRecords(ctx context.Context, records []events.DynamoDBEventRecord, db es.ES) error {
 	if len(records) == 0 {
 		return ErrNoRecords
 	}
 
 	docs := []es.Doc{}
+	index := ""
 	// TODO: we can parallalize this
 	for _, record := range records {
 		id, err := toId(record.Change.Keys)
@@ -79,16 +88,29 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		item := map[string]interface{}{}
 		for k, v := range record.Change.NewImage {
 			if i := toItem(v); i != nil {
-				item[santizeKey(k)] = i
+				item[es.SanitizeKey(k)] = i
 			}
 		}
+
+		// index name does not change in a single invocation
+		if index == "" || index == fmt.Sprintf("%s-unknown-table-name", IndexPrefix) {
+			index, err = indexName(record)
+			if err != nil {
+				logger.FromContext(ctx).WarnD("table-name-not-found", logger.M{
+					"record_id":           record.EventID,
+					"record_event_source": record.EventSourceArn,
+				})
+				index = fmt.Sprintf("%s-unknown-table-name", IndexPrefix)
+			}
+		}
+
 		switch events.DynamoDBOperationType(record.EventName) {
 		case events.DynamoDBOperationTypeInsert:
-			docs = append(docs, es.Doc{Op: es.OpTypeInsert, ID: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeInsert, ID: id, Item: item, Index: index})
 		case events.DynamoDBOperationTypeModify:
-			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, ID: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, ID: id, Item: item, Index: index})
 		case events.DynamoDBOperationTypeRemove:
-			docs = append(docs, es.Doc{Op: es.OpTypeDelete, ID: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeDelete, ID: id, Item: item, Index: index})
 		case "":
 			continue
 		default:
@@ -96,7 +118,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		}
 	}
 
-	if err := db.WriteDocs(docs); err != nil {
+	if err := db.WriteDocs(ctx, docs); err != nil {
 		// print out docs on error
 		out, _ := json.Marshal(docs)
 		fmt.Println(string(out[:]))
@@ -154,7 +176,7 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
 			if i := toItem(v); i != nil {
-				doc[santizeKey(k)] = i
+				doc[es.SanitizeKey(k)] = i
 			}
 		}
 		return doc
@@ -177,29 +199,16 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 	default:
 		return nil
 	}
-
 }
 
-// indexName computes index name. It does change in a single invocation but for now,
-// calculate it for each record since it's simpler
-func indexName(record events.DynamoDBEventRecord) string {
-	results := indexPattern.FindStringSubmatch(record.EventSourceArn)
+// indexName computes an doc index name based on the EventSourceArn
+// this should be the same for all records in a lambda invocation
+func indexName(record events.DynamoDBEventRecord) (string, error) {
+	results := IndexPattern.FindStringSubmatch(record.EventSourceArn)
 	if len(results) == 0 {
-		log.ErrorD("table-name-not-found", logger.M{
-			"record_id":           record.EventID,
-			"record_event_source": record.EventSourceArn,
-		})
-		return fmt.Sprintf("%s-unknown-table-name", IndexPrefix)
+		return "", fmt.Errorf("table-name-not-found")
 	}
 
-	return fmt.Sprintf("%s%s", IndexPrefix, results[1])
-}
+	return fmt.Sprintf("%s%s", IndexPrefix, results[1]), nil
 
-// santizeKey makes sure that document keys meet Elasticsearch requirements
-func santizeKey(key string) string {
-	if _, ok := es.ESReservedFields[key]; ok {
-		// add another _ as prefix
-		return fmt.Sprintf("_%s", key)
-	}
-	return key
 }

@@ -21,8 +21,12 @@ build:
 run: build
 	echo "local run not supported yet, consider unit tests or deploying into dev"
 
-$(PKGS): golang-test-all-deps
+$(PKGS): ./es/es_mock.go golang-test-all-deps
 	$(call golang-test-all,$@)
 
 install_deps: golang-dep-vendor-deps
 	$(call golang-dep-vendor)
+	go build -o bin/mockgen ./vendor/github.com/golang/mock/mockgen
+
+./es/es_mock.go: ./es/es.go
+	bin/mockgen -package es -source ./es/es.go Doc > ./es/es_mock.go

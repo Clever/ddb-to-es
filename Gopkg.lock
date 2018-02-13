@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/Clever/kayvee-go"
-  packages = ["logger"]
-  revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
-  version = "v6.10.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/aws/aws-lambda-go"
   packages = ["events","lambda","lambda/messages","lambdacontext"]
@@ -18,6 +12,12 @@
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/golang/mock"
+  packages = ["gomock","mockgen","mockgen/model"]
+  revision = "58cd061d09382b6011f84c1291ebe50ef2e25bab"
 
 [[projects]]
   branch = "master"
@@ -68,6 +68,12 @@
   revision = "511d08a359d14c0dd9c4302af52ee9abb6f93c2a"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
+
+[[projects]]
   name = "gopkg.in/Clever/kayvee-go.v6"
   packages = [".","logger","router"]
   revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
@@ -88,6 +94,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "942e1c3abc35c12de2aa08eea30c8e5b669c1180cd8c6b861a31807e297e8725"
+  inputs-digest = "c1e4d63477b66e11b0480b4a66ae96dd30deea2fa3f1228b794fde088254e234"
   solver-name = "gps-cdcl"
   solver-version = 1
