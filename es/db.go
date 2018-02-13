@@ -48,7 +48,7 @@ type DBConfig struct {
 
 // DB allows for the writing Doc's to a backend
 type DB interface {
-	WriteDocs([]Doc) error
+	WriteDocs(context.Context, []Doc) error
 }
 
 // Elasticsearch exposes functionality to read and write from ElasticSearch
@@ -76,7 +76,7 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 }
 
 // WriteDocs implements the writing Doc's to elasticsearch as a batch
-func (db *Elasticsearch) WriteDocs(docs []Doc) error {
+func (db *Elasticsearch) WriteDocs(ctx context.Context, docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
 	for _, doc := range docs {
@@ -91,7 +91,7 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 		return nil
 	}
 
-	resp, err := bulkRequest.Do(context.Background())
+	resp, err := bulkRequest.Do(ctx)
 	if err != nil {
 		db.lg.ErrorD("write-failed", logger.M{
 			"error-type":   "UNKNOWN",
@@ -122,6 +122,15 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	}
 
 	return fmt.Errorf("errors-during-write")
+}
+
+// SanitizeKey makes sure that document keys meet Elasticsearch requirements
+func SanitizeKey(key string) string {
+	if _, ok := ESReservedFields[key]; ok {
+		// add another _ as prefix
+		return fmt.Sprintf("_%s", key)
+	}
+	return key
 }
 
 func toESRequest(doc Doc) elastic.BulkableRequest {

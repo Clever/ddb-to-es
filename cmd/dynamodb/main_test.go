@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
@@ -34,7 +35,7 @@ func TestProcessRecords(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := processRecords(test.request.Records, &MockDB{})
+		err := processRecords(context.TODO(), test.request.Records, &MockDB{})
 		assert.Equal(t, test.err, err)
 	}
 }
