@@ -20,9 +20,8 @@ deployment:
     owner: Clever
     commands:
     - $HOME/ci-scripts/circleci/catapult-publish-lambda ddb-to-es
-    # TODO: comment these in once catapult changes are on master
-    #- $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es clever-dev confirm-then-deploy
-    #- $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es production confirm-then-deploy
+    - $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es clever-dev confirm-then-deploy
+    - $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es production confirm-then-deploy
     branch: master
   non-master:
     owner: Clever
