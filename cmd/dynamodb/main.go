@@ -99,7 +99,11 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 	if err := db.WriteDocs(docs); err != nil {
 		// print out docs on error
 		out, _ := json.Marshal(docs)
-		fmt.Println(string(out[:]))
+		strOut := string(out[:])
+		if len(strOut) > 10000 {
+			strOut = strOut[:10000]
+		}
+		fmt.Println(strOut)
 		return err
 	}
 
