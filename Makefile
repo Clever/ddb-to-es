@@ -15,7 +15,7 @@ $(eval $(call golang-version-check,1.9))
 
 test: $(PKGS)
 
-build:
+build: generate
 	$(call lambda-build-go,$(PKG_MAIN),$(APP_NAME))
 
 run: build
@@ -24,5 +24,9 @@ run: build
 $(PKGS): golang-test-all-deps
 	$(call golang-test-all,$@)
 
+generate:
+	go generate ./cmd/$(CMD)
+
 install_deps: golang-dep-vendor-deps
 	$(call golang-dep-vendor)
+	go build -o bin/go-bindata ./vendor/github.com/jteeuwen/go-bindata/go-bindata
