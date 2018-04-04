@@ -1,0 +1,17 @@
+routes:
+  process-records-success:
+    matchers:
+      title: [ "process-records-success" ]
+    output:
+      type: "alerts"
+      series: "ddb-to-es.process-records-success"
+      dimensions: [ ]
+      stat_type: "counter"
+  process-records-failure:
+    matchers:
+      title: [ "process-records-failure" ]
+    output:
+      type: "alerts"
+      series: "ddb-to-es.process-records-failure"
+      dimensions: [ ]
+      stat_type: "counter"

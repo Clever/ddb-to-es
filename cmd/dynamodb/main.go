@@ -16,6 +16,9 @@ import (
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
+//go:generate $PWD/bin/go-bindata -pkg $GOPACKAGE -o bindata.go kvconfig.yml
+//go:generate gofmt -w bindata.go
+
 var log = logger.New(os.Getenv("APP_NAME"))
 var indexPattern = regexp.MustCompile("arn:aws:dynamodb:.*?:.*?:table/([0-9a-zA-Z_-]+)/.+")
 
@@ -34,16 +37,22 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 		if FailOnError {
 			return err
 		}
-		log.ErrorD("failed-process-records-but-continue", logger.M{
-			"message": err.Error(),
+		log.CounterD("process-records-failure", 1, logger.M{
+			"error": err.Error(),
 		})
+	} else {
+		log.Counter("process-records-success")
 	}
 
 	return nil
 }
 
 func main() {
-	var err error
+	err := logger.SetGlobalRoutingFromBytes(MustAsset("kvconfig.yml"))
+	if err != nil {
+		log.ErrorD("kvconfig-err", logger.M{"error": err})
+		os.Exit(1)
+	}
 	if FailOnError, err = strconv.ParseBool(os.Getenv("FAIL_ON_ERROR")); err != nil {
 		FailOnError = false
 	}
