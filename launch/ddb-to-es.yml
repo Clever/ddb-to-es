@@ -11,11 +11,11 @@ shepherds:
 - "mohit.gupta@clever.com"
 team: "eng-infra"
 lambda:
-  Timeout: 100
+  Timeout: 200
   Events:
     ProcessDynamoDBStream:
       Type: DynamoDB
       Properties:
         Stream: "${DYNAMODB_STREAM_ARN}"
-        BatchSize: 100
+        BatchSize: 200
         StartingPosition: LATEST
