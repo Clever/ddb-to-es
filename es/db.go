@@ -63,6 +63,7 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(config.URL),
 		elastic.SetSniff(false),
+		elastic.SetRetrier(elastic.NewBackoffRetrier(elastic.NewSimpleBackoff(1000, 2000, 4000))),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Could not connect to cluster: %s", err)
