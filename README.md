@@ -2,7 +2,7 @@
 
 Process DynamoDB streams and INDEX, MODIFY, DELETE Elasticsearch document
 
-Owned by TODO.
+Owned by eng-infra.
 
 ## Deploying
 
