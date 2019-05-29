@@ -81,10 +81,15 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
 	for _, doc := range docs {
-		req := toESRequest(doc)
+		req := toESRequest(doc, doc.Index)
 		// TODO: handle nil (error) cases better. For now let's just keep going
 		if req != nil {
 			bulkRequest.Add(req)
+		}
+
+		dualReq := toESRequest(doc, "workflow-manager-dev-v4-workflows")
+		if dualReq != nil {
+			bulkRequest.Add(dualReq)
 		}
 	}
 
@@ -125,9 +130,9 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	return fmt.Errorf("errors-during-write")
 }
 
-func toESRequest(doc Doc) elastic.BulkableRequest {
+func toESRequest(doc Doc, rawIndexName string) elastic.BulkableRequest {
 	// make sure we don't have invalid indexes
-	index := strings.ToLower(doc.Index)
+	index := strings.ToLower(rawIndexName)
 	if index == "" {
 		index = "unknown"
 	}
