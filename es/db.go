@@ -35,10 +35,9 @@ var (
 
 // Doc is a representation of an object that can be written via the DB interface
 type Doc struct {
-	Op    OpType
-	ID    string
-	Index string
-	Item  interface{}
+	Op   OpType
+	ID   string
+	Item interface{}
 }
 
 // DBConfig specifies how the client should connect to ElasticSearch
@@ -55,11 +54,12 @@ type DB interface {
 type Elasticsearch struct {
 	client *elastic.Client
 	config *DBConfig
+	index  string
 	lg     logger.KayveeLogger
 }
 
 // NewDB creates a new DB instance
-func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
+func NewDB(config *DBConfig, index string, lg logger.KayveeLogger) (DB, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(config.URL),
 		elastic.SetSniff(false),
@@ -72,6 +72,7 @@ func NewDB(config *DBConfig, lg logger.KayveeLogger) (DB, error) {
 	return &Elasticsearch{
 		client: client,
 		config: config,
+		index:  index,
 		lg:     lg,
 	}, nil
 }
@@ -81,7 +82,7 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
 	for _, doc := range docs {
-		req := toESRequest(doc)
+		req := toESRequest(doc, db.index)
 		// TODO: handle nil (error) cases better. For now let's just keep going
 		if req != nil {
 			bulkRequest.Add(req)
@@ -125,9 +126,9 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	return fmt.Errorf("errors-during-write")
 }
 
-func toESRequest(doc Doc) elastic.BulkableRequest {
+func toESRequest(doc Doc, rawIndexName string) elastic.BulkableRequest {
 	// make sure we don't have invalid indexes
-	index := strings.ToLower(doc.Index)
+	index := strings.ToLower(rawIndexName)
 	if index == "" {
 		index = "unknown"
 	}

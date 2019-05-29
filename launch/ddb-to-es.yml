@@ -2,7 +2,7 @@ run:
   type: lambda/us-west-1
 env:
   - ELASTICSEARCH_URL
-  - INDEX_PREFIX
+  - ELASTICSEARCH_INDEX
   - FAIL_ON_ERROR
   - DYNAMODB_STREAM_ARN
 resources:
