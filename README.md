@@ -1,6 +1,6 @@
 # ddb-to-es
 
-Process DynamoDB streams and INDEX, MODIFY, DELETE Elasticsearch document
+Process DynamoDB streams and INDEX, MODIFY, DELETE Elasticsearch documents
 
 Owned by eng-infra.
 

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -20,11 +19,9 @@ import (
 //go:generate gofmt -w bindata.go
 
 var log = logger.New(os.Getenv("APP_NAME"))
-var indexPattern = regexp.MustCompile("arn:aws:dynamodb:.*?:.*?:table/([0-9a-zA-Z_-]+)/.+")
 
 // FailOnError specifies if to only log errors or to also return to lambda
 var FailOnError bool
-var IndexPrefix string
 var DBClient es.DB
 
 // ErrNoRecords is an example error you could generate in handling an event.
@@ -56,11 +53,15 @@ func main() {
 	if FailOnError, err = strconv.ParseBool(os.Getenv("FAIL_ON_ERROR")); err != nil {
 		FailOnError = false
 	}
-	IndexPrefix = os.Getenv("INDEX_PREFIX")
+	esIndex := os.Getenv("ELASTICSEARCH_INDEX")
+	if esIndex == "" {
+		log.Error("missing-index")
+		os.Exit(1)
+	}
 	esURL := os.Getenv("ELASTICSEARCH_URL")
 
 	dbConfig := &es.DBConfig{URL: esURL}
-	DBClient, err = es.NewDB(dbConfig, log)
+	DBClient, err = es.NewDB(dbConfig, esIndex, log)
 	if err != nil {
 		log.ErrorD("elasticsearch-connect-error", logger.M{
 			"message": err.Error(),
@@ -93,11 +94,11 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		}
 		switch events.DynamoDBOperationType(record.EventName) {
 		case events.DynamoDBOperationTypeInsert:
-			docs = append(docs, es.Doc{Op: es.OpTypeInsert, ID: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeInsert, ID: id, Item: item})
 		case events.DynamoDBOperationTypeModify:
-			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, ID: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeUpdate, ID: id, Item: item})
 		case events.DynamoDBOperationTypeRemove:
-			docs = append(docs, es.Doc{Op: es.OpTypeDelete, ID: id, Item: item, Index: indexName(record)})
+			docs = append(docs, es.Doc{Op: es.OpTypeDelete, ID: id, Item: item})
 		case "":
 			continue
 		default:
@@ -191,21 +192,6 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 		return nil
 	}
 
-}
-
-// indexName computes index name. It does change in a single invocation but for now,
-// calculate it for each record since it's simpler
-func indexName(record events.DynamoDBEventRecord) string {
-	results := indexPattern.FindStringSubmatch(record.EventSourceArn)
-	if len(results) == 0 {
-		log.ErrorD("table-name-not-found", logger.M{
-			"record_id":           record.EventID,
-			"record_event_source": record.EventSourceArn,
-		})
-		return fmt.Sprintf("%s-unknown-table-name", IndexPrefix)
-	}
-
-	return fmt.Sprintf("%s%s", IndexPrefix, results[1])
 }
 
 // santizeKey makes sure that document keys meet Elasticsearch requirements
