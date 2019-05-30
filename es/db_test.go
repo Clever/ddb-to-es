@@ -8,7 +8,7 @@ import (
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
-// this test currently requires a running elasticsaerch
+// this test currently requires a running elasticsearch
 // at localhost:9200
 func TestWriteDocs(t *testing.T) {
 	tests := []struct {
