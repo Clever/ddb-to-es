@@ -38,10 +38,14 @@ func TestWriteDocs(t *testing.T) {
 	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
 	assert.NoError(t, err)
 
+	setupIndices(t, db.client, indices)
+
 	for _, test := range tests {
 		err = db.WriteDocs(test.docs)
 		assert.NoError(t, err)
 	}
+
+	deleteIndices(db.client, indices)
 }
 
 func TestWriteDocsComplexBatch(t *testing.T) {
@@ -52,8 +56,13 @@ func TestWriteDocsComplexBatch(t *testing.T) {
 	indices := []string{"test-index"}
 	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
 	assert.NoError(t, err)
+
+	setupIndices(t, db.client, indices)
+
 	err = db.WriteDocs(*docs)
 	assert.NoError(t, err)
+
+	deleteIndices(db.client, indices)
 }
 
 // a complex document pulled from a test DynamoDB stream
