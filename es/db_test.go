@@ -34,8 +34,8 @@ func TestWriteDocs(t *testing.T) {
 		},
 	}
 
-	testIndex := "testIndex"
-	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, testIndex, logger.New("test"))
+	indices := []string{"test-index"}
+	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
 	assert.NoError(t, err)
 
 	for _, test := range tests {
@@ -49,8 +49,8 @@ func TestWriteDocsComplexBatch(t *testing.T) {
 	err := json.Unmarshal([]byte(docsJSON), docs)
 	assert.NoError(t, err)
 
-	testIndex := "testIndex"
-	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, testIndex, logger.New("test"))
+	indices := []string{"test-index"}
+	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
 	assert.NoError(t, err)
 	err = db.WriteDocs(*docs)
 	assert.NoError(t, err)

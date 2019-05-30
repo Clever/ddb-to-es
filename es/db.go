@@ -52,14 +52,14 @@ type DB interface {
 
 // Elasticsearch exposes functionality to read and write from ElasticSearch
 type Elasticsearch struct {
-	client *elastic.Client
-	config *DBConfig
-	index  string
-	lg     logger.KayveeLogger
+	client  *elastic.Client
+	config  *DBConfig
+	indices []string
+	lg      logger.KayveeLogger
 }
 
 // NewDB creates a new DB instance
-func NewDB(config *DBConfig, index string, lg logger.KayveeLogger) (DB, error) {
+func NewDB(config *DBConfig, indices []string, lg logger.KayveeLogger) (DB, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(config.URL),
 		elastic.SetSniff(false),
@@ -70,10 +70,10 @@ func NewDB(config *DBConfig, index string, lg logger.KayveeLogger) (DB, error) {
 	}
 
 	return &Elasticsearch{
-		client: client,
-		config: config,
-		index:  index,
-		lg:     lg,
+		client:  client,
+		config:  config,
+		indices: indices,
+		lg:      lg,
 	}, nil
 }
 
@@ -82,10 +82,12 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
 	for _, doc := range docs {
-		req := toESRequest(doc, db.index)
-		// TODO: handle nil (error) cases better. For now let's just keep going
-		if req != nil {
-			bulkRequest.Add(req)
+		for _, index := range db.indices {
+			req := toESRequest(doc, index)
+			// TODO: handle nil (error) cases better. For now let's just keep going
+			if req != nil {
+				bulkRequest.Add(req)
+			}
 		}
 	}
 

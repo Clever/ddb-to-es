@@ -53,15 +53,23 @@ func main() {
 	if FailOnError, err = strconv.ParseBool(os.Getenv("FAIL_ON_ERROR")); err != nil {
 		FailOnError = false
 	}
-	esIndex := os.Getenv("ELASTICSEARCH_INDEX")
-	if esIndex == "" {
-		log.Error("missing-index")
+
+	// Parse a comma separated list of Elasticsearch indices.
+	rawESIndices := strings.Split(os.Getenv("ELASTICSEARCH_INDICES"), ",")
+	esIndices := []string{}
+	for _, index := range rawESIndices {
+		if index != "" {
+			esIndices = append(esIndices, strings.TrimSpace(index))
+		}
+	}
+	if len(esIndices) < 1 {
+		log.Error("missing-elasticsearch-indices")
 		os.Exit(1)
 	}
 	esURL := os.Getenv("ELASTICSEARCH_URL")
 
 	dbConfig := &es.DBConfig{URL: esURL}
-	DBClient, err = es.NewDB(dbConfig, esIndex, log)
+	DBClient, err = es.NewDB(dbConfig, esIndices, log)
 	if err != nil {
 		log.ErrorD("elasticsearch-connect-error", logger.M{
 			"message": err.Error(),
