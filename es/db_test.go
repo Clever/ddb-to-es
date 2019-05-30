@@ -48,6 +48,32 @@ func TestWriteDocs(t *testing.T) {
 	deleteIndices(db.client, indices)
 }
 
+func TestWriteDocsToMultipleIndices(t *testing.T) {
+	testDoc := Doc{
+		Op: "insert",
+		ID: "708",
+		Item: map[string]interface{}{
+			"animal": "bear",
+			"type":   "fat",
+		},
+	}
+
+	indices := []string{"test-index-1", "test-index-2"}
+	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
+	assert.NoError(t, err)
+
+	setupIndices(t, db.client, indices)
+
+	err = db.WriteDocs([]Doc{testDoc})
+	assert.NoError(t, err)
+
+	for _, index := range indices {
+		assertIndexHasDoc(t, db.client, index, testDoc.ID)
+	}
+
+	deleteIndices(db.client, indices)
+}
+
 func TestWriteDocsComplexBatch(t *testing.T) {
 	docs := &[]Doc{}
 	err := json.Unmarshal([]byte(docsJSON), docs)
