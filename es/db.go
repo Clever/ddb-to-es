@@ -59,7 +59,7 @@ type Elasticsearch struct {
 }
 
 // NewDB creates a new DB instance
-func NewDB(config *DBConfig, indices []string, lg logger.KayveeLogger) (DB, error) {
+func NewDB(config *DBConfig, indices []string, lg logger.KayveeLogger) (*Elasticsearch, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(config.URL),
 		elastic.SetSniff(false),
