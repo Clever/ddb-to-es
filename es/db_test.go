@@ -8,7 +8,7 @@ import (
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
-// this test currently requires a running elasticsaerch
+// this test currently requires a running elasticsearch
 // at localhost:9200
 func TestWriteDocs(t *testing.T) {
 	tests := []struct {
@@ -34,14 +34,44 @@ func TestWriteDocs(t *testing.T) {
 		},
 	}
 
-	testIndex := "testIndex"
-	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, testIndex, logger.New("test"))
+	indices := []string{"test-index"}
+	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
 	assert.NoError(t, err)
+
+	setupIndices(t, db.client, indices)
 
 	for _, test := range tests {
 		err = db.WriteDocs(test.docs)
 		assert.NoError(t, err)
 	}
+
+	deleteIndices(db.client, indices)
+}
+
+func TestWriteDocsToMultipleIndices(t *testing.T) {
+	testDoc := Doc{
+		Op: "insert",
+		ID: "708",
+		Item: map[string]interface{}{
+			"animal": "bear",
+			"type":   "fat",
+		},
+	}
+
+	indices := []string{"test-index-1", "test-index-2"}
+	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
+	assert.NoError(t, err)
+
+	setupIndices(t, db.client, indices)
+
+	err = db.WriteDocs([]Doc{testDoc})
+	assert.NoError(t, err)
+
+	for _, index := range indices {
+		assertIndexHasDoc(t, db.client, index, testDoc.ID)
+	}
+
+	deleteIndices(db.client, indices)
 }
 
 func TestWriteDocsComplexBatch(t *testing.T) {
@@ -49,11 +79,16 @@ func TestWriteDocsComplexBatch(t *testing.T) {
 	err := json.Unmarshal([]byte(docsJSON), docs)
 	assert.NoError(t, err)
 
-	testIndex := "testIndex"
-	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, testIndex, logger.New("test"))
+	indices := []string{"test-index"}
+	db, err := NewDB(&DBConfig{URL: "http://localhost:9200"}, indices, logger.New("test"))
 	assert.NoError(t, err)
+
+	setupIndices(t, db.client, indices)
+
 	err = db.WriteDocs(*docs)
 	assert.NoError(t, err)
+
+	deleteIndices(db.client, indices)
 }
 
 // a complex document pulled from a test DynamoDB stream
