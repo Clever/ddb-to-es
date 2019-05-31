@@ -3,111 +3,165 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:9c9b7bff064dfc670f6991fd51461861a86f74e21daedf957bceacf7271f4a38"
   name = "github.com/aws/aws-lambda-go"
   packages = [
     "events",
     "lambda",
+    "lambda/handlertrace",
     "lambda/messages",
-    "lambdacontext"
+    "lambdacontext",
   ]
-  revision = "6b9a1075bdff82af84679480193c4aa8c68db4f4"
+  pruneopts = ""
+  revision = "af0b813d5803d9754b920ed666b1cf8c16becfb3"
 
 [[projects]]
+  digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = ""
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:17a07b60ea50bffc1e8bd84cf4f1e5fcc07f9a5f1c50bbbe3baebc91664fb772"
   name = "github.com/jteeuwen/go-bindata"
   packages = [
     ".",
-    "go-bindata"
+    "go-bindata",
   ]
+  pruneopts = ""
   revision = "6025e8de665b31fa74ab1a66f2cddd8c0abf887e"
 
 [[projects]]
   branch = "master"
+  digest = "1:ccc20cacf54eb16464dad02efa1c14fa7c0b9e124639b0d2a51dcc87b0154e4c"
   name = "github.com/mailru/easyjson"
   packages = [
     ".",
     "buffer",
     "jlexer",
-    "jwriter"
+    "jwriter",
   ]
+  pruneopts = ""
   revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
 
 [[projects]]
+  digest = "1:208320a64803b8cda4f8263d3cdc30dd04e9c871ae5e6cfc3d862e263da2e51d"
   name = "github.com/olivere/elastic"
   packages = [
     "config",
-    "uritemplates"
+    "uritemplates",
   ]
+  pruneopts = ""
   revision = "c51e74f9bcab8906a2f6cf5660dac396ba51b3d6"
   version = "v6.1.4"
 
 [[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = ""
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = ""
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:8dde673b02ce088524e0fcaa1508cb46316302ffc4a6395109251dc2c8ba0580"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
+  pruneopts = ""
   revision = "87b1dfb5b2fa649f52695dd9eae19abe404a4308"
 
 [[projects]]
   branch = "master"
+  digest = "1:dd275b17b08ad316ab1e69396a09085b65b0a728869bd406d0515f2f08ad4571"
   name = "github.com/xeipuuv/gojsonpointer"
   packages = ["."]
+  pruneopts = ""
   revision = "6fe8760cad3569743d51ddbb243b26f8456742dc"
 
 [[projects]]
   branch = "master"
+  digest = "1:feb667646650e600036a4731f959e746eb755970fc2c8a3d54c66a0cde7ac69d"
   name = "github.com/xeipuuv/gojsonreference"
   packages = ["."]
+  pruneopts = ""
   revision = "e02fc20de94c78484cd5ffb007f8af96be030a45"
 
 [[projects]]
   branch = "master"
+  digest = "1:61c4090eb4f4c7941e77aa64c281f3f47983a68f4466c63b7471bfa4d739be50"
   name = "github.com/xeipuuv/gojsonschema"
   packages = ["."]
+  pruneopts = ""
   revision = "511d08a359d14c0dd9c4302af52ee9abb6f93c2a"
 
 [[projects]]
+  digest = "1:a4def2c682400fa6cbe31fd23cd3a698114b09fdfddb9f88b0c193245178ac47"
   name = "gopkg.in/Clever/kayvee-go.v6"
   packages = [
     ".",
     "logger",
-    "router"
+    "router",
   ]
+  pruneopts = ""
   revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
   version = "v6.10.0"
 
 [[projects]]
+  digest = "1:208320a64803b8cda4f8263d3cdc30dd04e9c871ae5e6cfc3d862e263da2e51d"
   name = "gopkg.in/olivere/elastic.v6"
   packages = ["."]
+  pruneopts = ""
   revision = "c51e74f9bcab8906a2f6cf5660dac396ba51b3d6"
   version = "v6.1.4"
 
 [[projects]]
   branch = "v2"
+  digest = "1:cd78af685c4c12af0f2e9526f504ab3b18ef06130b325729e096dfe5a807ea86"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
+  pruneopts = ""
   revision = "1244d3ce02e3e1c16820ada0bae506b6c479f106"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb9b237cdc61b8e95fd468c41b5ba2fcababf5cd3807cc248b577cd9015b09fe"
+  input-imports = [
+    "github.com/aws/aws-lambda-go/events",
+    "github.com/aws/aws-lambda-go/lambda",
+    "github.com/aws/aws-lambda-go/lambda/messages",
+    "github.com/aws/aws-lambda-go/lambdacontext",
+    "github.com/davecgh/go-spew/spew",
+    "github.com/jteeuwen/go-bindata",
+    "github.com/jteeuwen/go-bindata/go-bindata",
+    "github.com/mailru/easyjson",
+    "github.com/mailru/easyjson/buffer",
+    "github.com/mailru/easyjson/jlexer",
+    "github.com/mailru/easyjson/jwriter",
+    "github.com/olivere/elastic/config",
+    "github.com/olivere/elastic/uritemplates",
+    "github.com/pkg/errors",
+    "github.com/pmezard/go-difflib/difflib",
+    "github.com/stretchr/testify/assert",
+    "github.com/xeipuuv/gojsonpointer",
+    "github.com/xeipuuv/gojsonreference",
+    "github.com/xeipuuv/gojsonschema",
+    "gopkg.in/Clever/kayvee-go.v6",
+    "gopkg.in/Clever/kayvee-go.v6/logger",
+    "gopkg.in/Clever/kayvee-go.v6/router",
+    "gopkg.in/olivere/elastic.v6",
+    "gopkg.in/yaml.v2",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
