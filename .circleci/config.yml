@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: /go/src/github.com/Clever/ddb-to-es
     docker:
-    - image: circleci/golang:1.10.3-stretch
+    - image: circleci/golang:1.12-stretch
     - image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
     environment:
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
