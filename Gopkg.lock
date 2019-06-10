@@ -122,12 +122,12 @@
   version = "v6.17.0"
 
 [[projects]]
-  digest = "1:0a8ca0e81b2a9774222942aacb0d097c5bf79e6d58ae4c6477359c2567a3c9fa"
+  digest = "1:598f5e295ba83da7aa694f327e59a39bcaa5520d556cf4e349bbd61c2b4513fe"
   name = "gopkg.in/olivere/elastic.v6"
   packages = ["."]
   pruneopts = ""
-  revision = "6f5e4e72d33dc7dfef8e6110b9b01b10d2026b2b"
-  version = "v6.2.18"
+  revision = "9a5942842e80bd3c67c6bf9385a32a6c29eba0e4"
+  version = "v6.2.19"
 
 [[projects]]
   branch = "v2"
