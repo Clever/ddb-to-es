@@ -30,7 +30,7 @@ var ErrNoRecords = errors.New("no records contained in event")
 // Handler is your Lambda function handler.
 // The return signature can be empty, a single error, or a return value (struct or string) and error.
 func Handler(ctx context.Context, event events.DynamoDBEvent) error {
-	if err := processRecords(event.Records, DBClient); err != nil {
+	if _, err := processRecords(event.Records, DBClient); err != nil {
 		if FailOnError {
 			return err
 		}
@@ -82,9 +82,9 @@ func main() {
 }
 
 // processRecords converts DynamoDB stream records to es.Doc and writes them to the db
-func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
+func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, error) {
 	if len(records) == 0 {
-		return ErrNoRecords
+		return nil, ErrNoRecords
 	}
 
 	docs := []es.Doc{}
@@ -92,7 +92,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 	for _, record := range records {
 		id, err := toId(record.Change.Keys)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		item := map[string]interface{}{}
 		for k, v := range record.Change.NewImage {
@@ -110,7 +110,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		case "":
 			continue
 		default:
-			return fmt.Errorf("Unsupported eventName %s", record.EventName)
+			return nil, fmt.Errorf("Unsupported eventName %s", record.EventName)
 		}
 	}
 
@@ -122,10 +122,10 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 			strOut = strOut[:10000]
 		}
 		fmt.Println(strOut)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return docs, nil
 }
 
 // toId generates a deterministic Id for each record
@@ -175,6 +175,10 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 	case events.DataTypeMap:
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
+			// When we send workflows to ES, including the state machine explodes the number of fields.
+			if k == "stateMachine" {
+				continue
+			}
 			if i := toItem(v); i != nil {
 				doc[santizeKey(k)] = i
 			}

@@ -107,6 +107,26 @@
               },
               "Age": {
                 "N": "35"
+              },
+              "stateMachine": {
+                "M": {
+                  "State1": {
+                    "S": "state 1"
+                  },
+                  "NumStates": {
+                    "N": "1"
+                  }
+                }
+              },
+              "stateMachineOtherFieldName": {
+                "M": {
+                  "State1": {
+                    "S": "state 1"
+                  },
+                  "NumStates": {
+                    "N": "1"
+                  }
+                }
               }
             }
           },

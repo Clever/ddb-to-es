@@ -19,11 +19,45 @@ func (db *MockDB) WriteDocs(docs []es.Doc) error {
 func TestProcessRecords(t *testing.T) {
 	tests := []struct {
 		request events.DynamoDBEvent
+		docs    []es.Doc
 		err     error
 	}{
 		{
 			request: loadDynamoDBEvent(t),
-			err:     nil,
+			docs: []es.Doc{
+				es.Doc{
+					Op: "insert",
+					ID: "data|binary",
+					Item: map[string]interface{}{
+						"asdf1": []uint8{0x0, 0x1, 0x2a, 0x41},
+						"asdf2": [][]uint8{[]uint8{0x0, 0x1, 0x2a, 0x41}, []uint8{0x41, 0x2a, 0x1, 0x0}},
+						"key":   "binary", "val": "data"},
+				},
+				es.Doc{
+					Op: "insert",
+					ID: "data|binary",
+					Item: map[string]interface{}{
+						"Binary":         []uint8{0x0, 0x1, 0x2a, 0x41},
+						"BinarySet":      [][]uint8{[]uint8{0x0, 0x1, 0x2a, 0x41}, []uint8{0x0, 0x1, 0x2a, 0x41}},
+						"Boolean":        true,
+						"EmptyStringSet": []string{},
+						"FloatNumber":    "123.45",
+						"IntegerNumber":  "123",
+						"List":           []interface{}{"Cookies", "Coffee", "3.14159"},
+						"Map": map[string]interface{}{
+							"Age":                        "35",
+							"Name":                       "Joe",
+							"stateMachineOtherFieldName": map[string]interface{}{"NumStates": "1", "State1": "state 1"}},
+						"NumberSet": []string{"1234", "567.8"},
+						"String":    "Hello",
+						"StringSet": []string{"Giraffe", "Zebra"},
+						"asdf1":     []uint8{0x0, 0x1, 0x2a, 0x41},
+						"asdf2":     [][]uint8{[]uint8{0x0, 0x1, 0x2a, 0x41}, []uint8{0x41, 0x2a, 0x1, 0x0}, []uint8{0x0, 0x1, 0x2a, 0x41}},
+						"b2":        []uint8{0xb5, 0xeb, 0x2d}, "key": "binary", "val": "data",
+					},
+				},
+			},
+			err: nil,
 		},
 		{
 			request: events.DynamoDBEvent{
@@ -34,8 +68,9 @@ func TestProcessRecords(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := processRecords(test.request.Records, &MockDB{})
+		docs, err := processRecords(test.request.Records, &MockDB{})
 		assert.Equal(t, test.err, err)
+		assert.Equal(t, test.docs, docs)
 	}
 }
 
