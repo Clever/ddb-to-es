@@ -30,7 +30,7 @@ var ErrNoRecords = errors.New("no records contained in event")
 // Handler is your Lambda function handler.
 // The return signature can be empty, a single error, or a return value (struct or string) and error.
 func Handler(ctx context.Context, event events.DynamoDBEvent) error {
-	if err := processRecords(event.Records, DBClient); err != nil {
+	if _, err := processRecords(event.Records, DBClient); err != nil {
 		if FailOnError {
 			return err
 		}
@@ -82,9 +82,9 @@ func main() {
 }
 
 // processRecords converts DynamoDB stream records to es.Doc and writes them to the db
-func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
+func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, error) {
 	if len(records) == 0 {
-		return ErrNoRecords
+		return nil, ErrNoRecords
 	}
 
 	docs := []es.Doc{}
@@ -92,11 +92,11 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 	for _, record := range records {
 		id, err := toId(record.Change.Keys)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		item := map[string]interface{}{}
 		for k, v := range record.Change.NewImage {
-			if i := toItem(v); i != nil {
+			if i := toItem(v, k); i != nil {
 				item[santizeKey(k)] = i
 			}
 		}
@@ -110,7 +110,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 		case "":
 			continue
 		default:
-			return fmt.Errorf("Unsupported eventName %s", record.EventName)
+			return nil, fmt.Errorf("Unsupported eventName %s", record.EventName)
 		}
 	}
 
@@ -122,17 +122,17 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) error {
 			strOut = strOut[:10000]
 		}
 		fmt.Println(strOut)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return docs, nil
 }
 
 // toId generates a deterministic Id for each record
 func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 	values := []string{}
 	for _, key := range ddbKeys {
-		item := toItem(key)
+		item := toItem(key, "")
 		if key.DataType() == events.DataTypeMap ||
 			key.DataType() == events.DataTypeList ||
 			key.DataType() == events.DataTypeBinary ||
@@ -162,12 +162,12 @@ func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 
 // toItem recursively walks through DynamoDBAttributeValue
 // to convert it to a standard object
-func toItem(value events.DynamoDBAttributeValue) interface{} {
+func toItem(value events.DynamoDBAttributeValue, pathSoFar string) interface{} {
 	switch value.DataType() {
 	case events.DataTypeList:
 		doc := []interface{}{}
 		for _, item := range value.List() {
-			if i := toItem(item); i != nil {
+			if i := toItem(item, pathSoFar); i != nil {
 				doc = append(doc, i)
 			}
 		}
@@ -175,7 +175,13 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 	case events.DataTypeMap:
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
-			if i := toItem(v); i != nil {
+			path := fmt.Sprintf("%s.%s", pathSoFar, k)
+			fmt.Println(path)
+			// When we send workflows to ES, including the state machine explodes the number of fields.
+			if path == "Workflow.workflowDefinition.stateMachine" {
+				continue
+			}
+			if i := toItem(v, path); i != nil {
 				doc[santizeKey(k)] = i
 			}
 		}
