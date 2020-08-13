@@ -96,7 +96,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 		}
 		item := map[string]interface{}{}
 		for k, v := range record.Change.NewImage {
-			if i := toItem(v); i != nil {
+			if i := toItem(v, k); i != nil {
 				item[santizeKey(k)] = i
 			}
 		}
@@ -132,7 +132,7 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 	values := []string{}
 	for _, key := range ddbKeys {
-		item := toItem(key)
+		item := toItem(key, "")
 		if key.DataType() == events.DataTypeMap ||
 			key.DataType() == events.DataTypeList ||
 			key.DataType() == events.DataTypeBinary ||
@@ -162,12 +162,12 @@ func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 
 // toItem recursively walks through DynamoDBAttributeValue
 // to convert it to a standard object
-func toItem(value events.DynamoDBAttributeValue) interface{} {
+func toItem(value events.DynamoDBAttributeValue, pathSoFar string) interface{} {
 	switch value.DataType() {
 	case events.DataTypeList:
 		doc := []interface{}{}
 		for _, item := range value.List() {
-			if i := toItem(item); i != nil {
+			if i := toItem(item, pathSoFar); i != nil {
 				doc = append(doc, i)
 			}
 		}
@@ -175,11 +175,13 @@ func toItem(value events.DynamoDBAttributeValue) interface{} {
 	case events.DataTypeMap:
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
+			path := fmt.Sprintf("%s.%s", pathSoFar, k)
+			fmt.Println(path)
 			// When we send workflows to ES, including the state machine explodes the number of fields.
-			if k == "stateMachine" {
+			if path == "Workflow.workflowDefinition.stateMachine" {
 				continue
 			}
-			if i := toItem(v); i != nil {
+			if i := toItem(v, path); i != nil {
 				doc[santizeKey(k)] = i
 			}
 		}

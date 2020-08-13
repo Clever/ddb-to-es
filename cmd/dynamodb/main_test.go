@@ -45,9 +45,20 @@ func TestProcessRecords(t *testing.T) {
 						"IntegerNumber":  "123",
 						"List":           []interface{}{"Cookies", "Coffee", "3.14159"},
 						"Map": map[string]interface{}{
-							"Age":                        "35",
-							"Name":                       "Joe",
-							"stateMachineOtherFieldName": map[string]interface{}{"NumStates": "1", "State1": "state 1"}},
+							"Age":  "35",
+							"Name": "Joe",
+							"Workflow": map[string]interface{}{
+								"workflowDefinition": map[string]interface{}{
+									"stateMachine": map[string]interface{}{
+										"NumStates": "1",
+										"State1":    "state 1",
+									},
+								},
+							},
+						},
+						"Workflow": map[string]interface{}{
+							"workflowDefinition": map[string]interface{}{},
+						},
 						"NumberSet": []string{"1234", "567.8"},
 						"String":    "Hello",
 						"StringSet": []string{"Giraffe", "Zebra"},
