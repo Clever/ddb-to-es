@@ -14,7 +14,7 @@ required = ["github.com/jteeuwen/go-bindata/go-bindata"]
 
 [[constraint]]
   name = "gopkg.in/Clever/kayvee-go.v6"
-  version = "6.0.0"
+  version = "6.24.0"
 
 [[constraint]]
   name = "gopkg.in/olivere/elastic.v6"
