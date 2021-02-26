@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -128,7 +129,13 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 // toId generates a deterministic Id for each record
 func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 	values := []string{}
-	for _, key := range ddbKeys {
+	keysSorted := []string{}
+	for k := range ddbKeys {
+		keysSorted = append(keysSorted, k)
+	}
+	sort.Strings(keysSorted)
+	for _, k := range keysSorted {
+		key := ddbKeys[k]
 		item := toItem(key, "")
 		if key.DataType() == events.DataTypeMap ||
 			key.DataType() == events.DataTypeList ||
