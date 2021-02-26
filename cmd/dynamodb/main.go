@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -34,8 +35,12 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 		if FailOnError {
 			return err
 		}
+		errorMsg := err.Error()
+		if len(errorMsg) > 50 {
+			errorMsg = errorMsg[:50]
+		}
 		log.CounterD("process-records-failure", 1, logger.M{
-			"error": err.Error(),
+			"error": errorMsg,
 		})
 	} else {
 		log.Counter("process-records-success")
@@ -115,13 +120,6 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 	}
 
 	if err := db.WriteDocs(docs); err != nil {
-		// print out docs on error
-		out, _ := json.Marshal(docs)
-		strOut := string(out[:])
-		if len(strOut) > 10000 {
-			strOut = strOut[:10000]
-		}
-		fmt.Println(strOut)
 		return nil, err
 	}
 
@@ -131,7 +129,13 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 // toId generates a deterministic Id for each record
 func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 	values := []string{}
-	for _, key := range ddbKeys {
+	keysSorted := []string{}
+	for k := range ddbKeys {
+		keysSorted = append(keysSorted, k)
+	}
+	sort.Strings(keysSorted)
+	for _, k := range keysSorted {
+		key := ddbKeys[k]
 		item := toItem(key, "")
 		if key.DataType() == events.DataTypeMap ||
 			key.DataType() == events.DataTypeList ||

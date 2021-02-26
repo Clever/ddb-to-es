@@ -27,7 +27,7 @@ func TestProcessRecords(t *testing.T) {
 			docs: []es.Doc{
 				es.Doc{
 					Op: "insert",
-					ID: "data|binary",
+					ID: "binary|data",
 					Item: map[string]interface{}{
 						"asdf1": []uint8{0x0, 0x1, 0x2a, 0x41},
 						"asdf2": [][]uint8{[]uint8{0x0, 0x1, 0x2a, 0x41}, []uint8{0x41, 0x2a, 0x1, 0x0}},
@@ -35,7 +35,7 @@ func TestProcessRecords(t *testing.T) {
 				},
 				es.Doc{
 					Op: "insert",
-					ID: "data|binary",
+					ID: "binary|data",
 					Item: map[string]interface{}{
 						"Binary":         []uint8{0x0, 0x1, 0x2a, 0x41},
 						"BinarySet":      [][]uint8{[]uint8{0x0, 0x1, 0x2a, 0x41}, []uint8{0x0, 0x1, 0x2a, 0x41}},
