@@ -1,5 +1,5 @@
 run:
-  type: lambda/us-west-1
+  type: lambda
 env:
   - ELASTICSEARCH_URL
   - ELASTICSEARCH_INDICES
@@ -19,3 +19,5 @@ lambda:
         Stream: "${DYNAMODB_STREAM_ARN}"
         BatchSize: 200
         StartingPosition: LATEST
+pod_config:
+  group: us-west-1
