@@ -180,7 +180,6 @@ func toItem(value events.DynamoDBAttributeValue, pathSoFar string) interface{} {
 		doc := map[string]interface{}{}
 		for k, v := range value.Map() {
 			path := fmt.Sprintf("%s.%s", pathSoFar, k)
-			fmt.Println(path)
 			// When we send workflows to ES, including the state machine explodes the number of fields.
 			if path == "Workflow.workflowDefinition.stateMachine" {
 				continue
