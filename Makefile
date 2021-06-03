@@ -27,6 +27,6 @@ $(PKGS): golang-test-all-deps
 generate:
 	go generate ./cmd/$(CMD)
 
-install_deps: golang-dep-vendor-deps
-	$(call golang-dep-vendor)
-	go build -o bin/go-bindata ./vendor/github.com/jteeuwen/go-bindata/go-bindata
+install_deps:
+	go mod vendor
+	go build -o bin/go-bindata ./vendor/github.com/kevinburke/go-bindata/go-bindata
