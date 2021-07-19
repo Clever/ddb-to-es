@@ -11,7 +11,7 @@ APP_NAME ?= $(REPONAME)
 
 .PHONY: test build run $(PKGS) install_deps
 
-$(eval $(call golang-version-check,1.13))
+$(eval $(call golang-version-check,1.16))
 
 test: $(PKGS)
 
@@ -29,4 +29,4 @@ generate:
 
 install_deps:
 	go mod vendor
-	go build -o bin/go-bindata ./vendor/github.com/kevinburke/go-bindata/go-bindata
+	go build -mod=vendor -o bin/go-bindata ./vendor/github.com/kevinburke/go-bindata/go-bindata
