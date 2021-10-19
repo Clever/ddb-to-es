@@ -1,6 +1,6 @@
 module github.com/Clever/ddb-to-es
 
-go 1.13
+go 1.16
 
 require (
 	github.com/aws/aws-lambda-go v1.24.0
