@@ -11,7 +11,7 @@ APP_NAME ?= $(REPONAME)
 
 .PHONY: test build run $(PKGS) install_deps
 
-$(eval $(call golang-version-check,1.13))
+$(eval $(call golang-version-check,1.16))
 
 test: $(PKGS)
 

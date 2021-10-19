@@ -33,7 +33,6 @@ github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c h1:XZWnr3b
 github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c/go.mod h1:GwrjFmJcFw6At/Gs6z4yjiIwzuJ1/+UwLxMQDVQXShQ=
 github.com/xeipuuv/gojsonschema v0.0.0-20171230112544-511d08a359d1 h1:47KQI2+S1PBlXJcTA3fOpNmC0nlMOs2ShWuU0P+OipU=
 github.com/xeipuuv/gojsonschema v0.0.0-20171230112544-511d08a359d1/go.mod h1:5yf86TLmAcydyeJq5YvxkGPE2fm/u4myDekKRoLuqhs=
-golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 gopkg.in/Clever/kayvee-go.v6 v6.26.0 h1:Ew/M+vvPlm3WqwnmIpu4EMzWqmfZ2KmGJCQF6Y9Z4Cw=
 gopkg.in/Clever/kayvee-go.v6 v6.26.0/go.mod h1:G0m6nBZj7Kdz+w2hiIaawmhXl5zp7E/K0ashol3Kb2A=
