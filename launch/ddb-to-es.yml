@@ -1,22 +1,23 @@
 run:
   type: lambda
+  architecture: x86_64
 env:
-  - ELASTICSEARCH_URL
-  - ELASTICSEARCH_INDICES
-  - FAIL_ON_ERROR
-  - DYNAMODB_STREAM_ARN
+- ELASTICSEARCH_URL
+- ELASTICSEARCH_INDICES
+- FAIL_ON_ERROR
+- DYNAMODB_STREAM_ARN
 resources:
   max_mem: 0.128
 shepherds:
-- "mohit.gupta@clever.com"
-team: "eng-infra"
+- mohit.gupta@clever.com
+team: eng-infra
 lambda:
   Timeout: 200
   Events:
     ProcessDynamoDBStream:
       Type: DynamoDB
       Properties:
-        Stream: "${DYNAMODB_STREAM_ARN}"
+        Stream: ${DYNAMODB_STREAM_ARN}
         BatchSize: 200
         StartingPosition: LATEST
 pod_config:
