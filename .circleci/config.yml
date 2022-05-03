@@ -27,5 +27,4 @@ jobs:
     - run: CMD=dynamodb APP_NAME=ddb-to-es make build
     - run: make test
     - run: $HOME/ci-scripts/circleci/catapult-publish-lambda ddb-to-es
-    - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es clever-dev no-confirm-deploy; fi;
-    - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es production confirm-then-deploy; fi;
+    - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es; fi;
