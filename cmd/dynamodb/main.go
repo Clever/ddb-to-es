@@ -39,7 +39,7 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 		if len(errorMsg) > 50 {
 			errorMsg = errorMsg[:50]
 		}
-		log.CounterD("process-records-failure", 1, logger.M{
+		log.InfoD("process-records-failure", logger.M{
 			"error": errorMsg,
 		})
 	} else {
