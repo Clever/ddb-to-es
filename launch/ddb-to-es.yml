@@ -18,7 +18,7 @@ lambda:
       Type: DynamoDB
       Properties:
         Stream: ${DYNAMODB_STREAM_ARN}
-        BatchSize: 20
+        BatchSize: 200
         StartingPosition: LATEST
 pod_config:
   group: us-west-1
