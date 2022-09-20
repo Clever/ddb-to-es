@@ -31,7 +31,7 @@ var ErrNoRecords = errors.New("no records contained in event")
 // Handler is your Lambda function handler.
 // The return signature can be empty, a single error, or a return value (struct or string) and error.
 func Handler(ctx context.Context, event events.DynamoDBEvent) error {
-	if _, err := processRecords(event.Records, DBClient); err != nil {
+	if docs, err := processRecords(event.Records, DBClient); err != nil {
 		if FailOnError {
 			return err
 		}
@@ -43,7 +43,7 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 			"error": errorMsg,
 		})
 	} else {
-		log.Counter("process-records-success")
+		log.InfoD("process-records-success", logger.M{"count": len(event.Records), "docs": len(docs)})
 	}
 
 	return nil
