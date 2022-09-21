@@ -81,8 +81,16 @@ func NewDB(config *DBConfig, indices []string, lg logger.KayveeLogger) (*Elastic
 func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 	bulkRequest := db.client.Bulk()
 
+	countUpdate := 0
+	countDelete := 0
+
 	for _, doc := range docs {
 		for _, index := range db.indices {
+			if doc.Op == OpTypeUpdate {
+				countUpdate += 1
+			} else if doc.Op == OpTypeDelete {
+				countDelete += 1
+			}
 			req := toESRequest(doc, index)
 			// TODO: handle nil (error) cases better. For now let's just keep going
 			if req != nil {
@@ -90,6 +98,8 @@ func (db *Elasticsearch) WriteDocs(docs []Doc) error {
 			}
 		}
 	}
+
+	db.lg.InfoD("write-docs-request", logger.M{"countUpdate": countUpdate, "countDelete": countDelete})
 
 	if bulkRequest.NumberOfActions() == 0 {
 		return nil
