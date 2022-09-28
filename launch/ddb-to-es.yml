@@ -7,7 +7,7 @@ env:
 - FAIL_ON_ERROR
 - DYNAMODB_STREAM_ARN
 resources:
-  max_mem: 0.256
+  max_mem: 0.128
 shepherds:
 - mohit.gupta@clever.com
 team: eng-infra
