@@ -11,3 +11,4 @@ bin/
 handler/
 handler.so
 handler.zip
+.git/
