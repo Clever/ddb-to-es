@@ -1,6 +1,6 @@
 run:
   type: lambda
-  architecture: x86_64
+  architecture: arm64
 env:
 - ELASTICSEARCH_URL
 - ELASTICSEARCH_INDICES

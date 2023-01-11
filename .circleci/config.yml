@@ -5,6 +5,8 @@ jobs:
     docker:
     - image: cimg/go:1.16
     - image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+      environment:
+      - discovery.type: single-node
     environment:
       GOPRIVATE: github.com/Clever/*
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
