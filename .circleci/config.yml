@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   build:
     working_directory: ~/go/src/github.com/Clever/ddb-to-es
@@ -30,3 +30,8 @@ jobs:
     - run: make test
     - run: $HOME/ci-scripts/circleci/catapult-publish-lambda ddb-to-es
     - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS ddb-to-es; fi;
+workflows:
+  build_test_publish_deploy:
+    jobs:
+    - build:
+        context: aws-lambda-public
