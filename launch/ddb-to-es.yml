@@ -13,7 +13,7 @@ shepherds:
 team: eng-infra
 lambda:
   Timeout: 200
-  MaxConcurrent: 55
+  MaxConcurrent: 50
   Events:
     ProcessDynamoDBStream:
       Type: DynamoDB
