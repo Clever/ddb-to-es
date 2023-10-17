@@ -16,7 +16,7 @@ import (
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
-//go:generate $PWD/bin/go-bindata -pkg $GOPACKAGE -o bindata.go kvconfig.yml
+//go:generate ../../bin/go-bindata -pkg $GOPACKAGE -o bindata.go kvconfig.yml
 //go:generate gofmt -w bindata.go
 
 var log = logger.New(os.Getenv("APP_NAME"))
