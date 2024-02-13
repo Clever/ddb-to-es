@@ -22,9 +22,9 @@ lambda:
         BatchSize: 200
         StartingPosition: LATEST
 pod_config:
+  devGroup: us-west-2
   group: us-west-1
 deploy_config:
   canaryInProd: false
   autoDeployEnvs:
   - clever-dev
-  - production
