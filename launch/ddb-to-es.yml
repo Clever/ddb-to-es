@@ -2,14 +2,14 @@ run:
   type: lambda
   architecture: arm64
 env:
-- ELASTICSEARCH_URL
-- ELASTICSEARCH_INDICES
-- FAIL_ON_ERROR
-- DYNAMODB_STREAM_ARN
+  - ELASTICSEARCH_URL
+  - ELASTICSEARCH_INDICES
+  - FAIL_ON_ERROR
+  - DYNAMODB_STREAM_ARN
 resources:
   max_mem: 0.128
 shepherds:
-- mohit.gupta@clever.com
+  - mohit.gupta@clever.com
 team: eng-infra
 lambda:
   Timeout: 200
@@ -22,9 +22,9 @@ lambda:
         BatchSize: 200
         StartingPosition: LATEST
 pod_config:
-  group: us-west-1
+  group: us-west-2
 deploy_config:
   canaryInProd: false
   autoDeployEnvs:
-  - clever-dev
-  - production
+    - clever-dev
+    - production
