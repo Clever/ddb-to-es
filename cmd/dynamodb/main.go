@@ -9,11 +9,13 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/Clever/ddb-to-es/es"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"gopkg.in/Clever/kayvee-go.v6/logger"
+
+	"github.com/Clever/ddb-to-es/es"
 )
 
 //go:generate $PWD/bin/go-bindata -pkg $GOPACKAGE -o bindata.go kvconfig.yml
@@ -22,8 +24,12 @@ import (
 var log = logger.New(os.Getenv("APP_NAME"))
 
 // FailOnError specifies if to only log errors or to also return to lambda
-var FailOnError bool
-var DBClient es.DB
+var (
+	FailOnError bool
+	DBClient    es.DB
+)
+
+const cutoverTime = "2024-07-15T15:00:00-07:00"
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
@@ -84,6 +90,25 @@ func main() {
 	lambda.Start(Handler)
 }
 
+func skipRecord(record events.DynamoDBEventRecord) bool {
+	t, err := time.Parse(time.RFC3339, cutoverTime)
+	if err != nil {
+		panic(err)
+	}
+	r, ok := os.LookupEnv("_POD_REGION")
+	if !ok {
+		panic("missing _POD_REGION")
+	}
+
+	if r == "us-west-2" && record.Change.ApproximateCreationDateTime.After(t) {
+		return false
+	}
+	if r == "us-west-1" && record.Change.ApproximateCreationDateTime.Before(t) {
+		return false
+	}
+	return true
+}
+
 // processRecords converts DynamoDB stream records to es.Doc and writes them to the db
 func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, error) {
 	if len(records) == 0 {
@@ -93,6 +118,9 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 	docs := []es.Doc{}
 	// TODO: we can parallalize this
 	for _, record := range records {
+		if skipRecord(record) {
+			continue
+		}
 		id, err := toId(record.Change.Keys)
 		if err != nil {
 			return nil, err
@@ -115,6 +143,10 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 		default:
 			return nil, fmt.Errorf("Unsupported eventName %s", record.EventName)
 		}
+	}
+
+	if len(docs) == 0 {
+		return nil, errors.New("all records skipped for stream cutover")
 	}
 
 	if err := db.WriteDocs(docs); err != nil {
@@ -149,7 +181,7 @@ func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 			values = append(values, string(val[:]))
 		} else {
 			switch item.(type) {
-			//case int:
+			// case int:
 			// TODO: aws-sdk-go treats number as string
 			case string:
 				values = append(values, item.(string))
@@ -206,7 +238,6 @@ func toItem(value events.DynamoDBAttributeValue, pathSoFar string) interface{} {
 	default:
 		return nil
 	}
-
 }
 
 // santizeKey makes sure that document keys meet Elasticsearch requirements
