@@ -29,8 +29,6 @@ var (
 	DBClient    es.DB
 )
 
-const cutoverTime = "2024-07-15T15:00:00-07:00"
-
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
 
@@ -90,23 +88,38 @@ func main() {
 	lambda.Start(Handler)
 }
 
-func skipRecord(record events.DynamoDBEventRecord) bool {
+const cutoverTime = "2024-07-15T15:00:00-07:00"
+
+// Facilitates cutting over to a new DDB stream. Before the time all
+// records will be processed in uw1. After the time, all records will be
+// processed in uw2. Making the assumption that it is extremely unlikely
+// that a record will have an exact timestamp down to the nanosecond of
+// the cutover time, so skipping that edge case. If you are reading this
+// after the cutover time you can safely revert
+// https://github.com/Clever/ddb-to-es/pull/78
+func skipRecord(record events.DynamoDBEventRecord) (bool, error) {
+	// only do this in prod and clever-dev
+	env := os.Getenv("_DEPLOY_ENV")
+	if env != "production" && env != "clever-dev" {
+		return false, nil
+	}
+
 	t, err := time.Parse(time.RFC3339, cutoverTime)
 	if err != nil {
-		panic(err)
+		return false, fmt.Errorf("failed to parse cutover time: %s", err)
 	}
 	r, ok := os.LookupEnv("_POD_REGION")
 	if !ok {
-		panic("missing _POD_REGION")
+		return false, errors.New("missing _POD_REGION")
 	}
 
 	if r == "us-west-2" && record.Change.ApproximateCreationDateTime.After(t) {
-		return false
+		return false, nil
 	}
 	if r == "us-west-1" && record.Change.ApproximateCreationDateTime.Before(t) {
-		return false
+		return false, nil
 	}
-	return true
+	return true, nil
 }
 
 // processRecords converts DynamoDB stream records to es.Doc and writes them to the db
@@ -118,7 +131,11 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 	docs := []es.Doc{}
 	// TODO: we can parallalize this
 	for _, record := range records {
-		if skipRecord(record) {
+		skip, err := skipRecord(record)
+		if err != nil {
+			return nil, err
+		}
+		if skip {
 			continue
 		}
 		id, err := toId(record.Change.Keys)
