@@ -88,7 +88,7 @@ func main() {
 	lambda.Start(Handler)
 }
 
-const cutoverTime = "2024-07-12T16:10:00-07:00"
+const cutoverTime = "2024-07-15T13:45:00-07:00"
 
 // Facilitates cutting over to a new DDB stream. Before the time all
 // records will be processed in uw1. After the time, all records will be
@@ -99,7 +99,7 @@ const cutoverTime = "2024-07-12T16:10:00-07:00"
 // https://github.com/Clever/ddb-to-es/pull/78
 func skipRecord(record events.DynamoDBEventRecord) (bool, error) {
 	// only do this in prod and clever-dev
-	env := os.Getenv("_DEPLOY_ENV")
+	env := os.Getenv("DEPLOY_ENV")
 	if env != "production" && env != "clever-dev" {
 		return false, nil
 	}
@@ -108,9 +108,9 @@ func skipRecord(record events.DynamoDBEventRecord) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to parse cutover time: %s", err)
 	}
-	r, ok := os.LookupEnv("_POD_REGION")
+	r, ok := os.LookupEnv("POD_REGION")
 	if !ok {
-		return false, errors.New("missing _POD_REGION")
+		return false, errors.New("missing POD_REGION")
 	}
 
 	if r == "us-west-2" && record.Change.ApproximateCreationDateTime.After(t) {
