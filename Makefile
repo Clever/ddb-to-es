@@ -18,8 +18,12 @@ test: $(PKGS)
 build: generate
 	$(call lambda-build-go,$(PKG_MAIN),$(APP_NAME))
 
-run: build
-	echo "local run not supported yet, consider unit tests or deploying into dev"
+build-local: generate
+	$(call golang-build,./cmd/$(CMD),$(APP_NAME))
+
+run: build-local
+	bin/$(APP_NAME)
+
 
 $(PKGS): golang-test-all-deps
 	$(call golang-test-all,$@)

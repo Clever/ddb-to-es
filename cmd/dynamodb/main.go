@@ -9,11 +9,13 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/Clever/ddb-to-es/es"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"gopkg.in/Clever/kayvee-go.v6/logger"
+
+	"github.com/Clever/ddb-to-es/es"
 )
 
 //go:generate $PWD/bin/go-bindata -pkg $GOPACKAGE -o bindata.go kvconfig.yml
@@ -22,8 +24,10 @@ import (
 var log = logger.New(os.Getenv("APP_NAME"))
 
 // FailOnError specifies if to only log errors or to also return to lambda
-var FailOnError bool
-var DBClient es.DB
+var (
+	FailOnError bool
+	DBClient    es.DB
+)
 
 // ErrNoRecords is an example error you could generate in handling an event.
 var ErrNoRecords = errors.New("no records contained in event")
@@ -39,7 +43,7 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 		if len(errorMsg) > 50 {
 			errorMsg = errorMsg[:50]
 		}
-		log.InfoD("process-records-failure", logger.M{
+		log.ErrorD("process-records-failure", logger.M{
 			"error": errorMsg,
 		})
 	}
@@ -81,7 +85,58 @@ func main() {
 		os.Exit(1)
 	}
 
-	lambda.Start(Handler)
+	if os.Getenv("POD_REGION") == "local" {
+		event := events.DynamoDBEvent{
+			Records: []events.DynamoDBEventRecord{
+				{},
+			},
+		}
+		log.InfoD("running-local", logger.M{
+			"data": event,
+		})
+
+		err := Handler(context.Background(), event)
+		if err != nil {
+			log.ErrorD("failed-local-run", logger.M{"error": err.Error()})
+			os.Exit(1)
+		}
+	} else {
+		lambda.Start(Handler)
+	}
+}
+
+const cutoverTime = "2024-07-16T15:00:00-07:00"
+
+// Facilitates cutting over to a new DDB stream. Before the time all
+// records will be processed in uw1. After the time, all records will be
+// processed in uw2. Making the assumption that it is extremely unlikely
+// that a record will have an exact timestamp down to the nanosecond of
+// the cutover time, so skipping that edge case. If you are reading this
+// after the cutover time you can safely revert
+// https://github.com/Clever/ddb-to-es/pull/78
+func skipRecord(record events.DynamoDBEventRecord) (bool, error) {
+	// only do this in prod and clever-dev
+	env := os.Getenv("DEPLOY_ENV")
+	if env != "production" && env != "clever-dev" {
+		return false, nil
+	}
+
+	t, err := time.Parse(time.RFC3339, cutoverTime)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse cutover time: %s", err)
+	}
+	r, ok := os.LookupEnv("POD_REGION")
+	if !ok {
+		return false, errors.New("missing POD_REGION")
+	}
+
+	if r == "us-west-2" && record.Change.ApproximateCreationDateTime.After(t) {
+		return false, nil
+	}
+	if r == "us-west-1" && record.Change.ApproximateCreationDateTime.Before(t) {
+		return false, nil
+	}
+	return true, nil
 }
 
 // processRecords converts DynamoDB stream records to es.Doc and writes them to the db
@@ -93,6 +148,13 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 	docs := []es.Doc{}
 	// TODO: we can parallalize this
 	for _, record := range records {
+		skip, err := skipRecord(record)
+		if err != nil {
+			return nil, err
+		}
+		if skip {
+			continue
+		}
 		id, err := toId(record.Change.Keys)
 		if err != nil {
 			return nil, err
@@ -115,6 +177,10 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 		default:
 			return nil, fmt.Errorf("Unsupported eventName %s", record.EventName)
 		}
+	}
+
+	if len(docs) == 0 {
+		return nil, errors.New("all records skipped for stream cutover")
 	}
 
 	if err := db.WriteDocs(docs); err != nil {
@@ -149,7 +215,7 @@ func toId(ddbKeys map[string]events.DynamoDBAttributeValue) (string, error) {
 			values = append(values, string(val[:]))
 		} else {
 			switch item.(type) {
-			//case int:
+			// case int:
 			// TODO: aws-sdk-go treats number as string
 			case string:
 				values = append(values, item.(string))
@@ -206,7 +272,6 @@ func toItem(value events.DynamoDBAttributeValue, pathSoFar string) interface{} {
 	default:
 		return nil
 	}
-
 }
 
 // santizeKey makes sure that document keys meet Elasticsearch requirements
