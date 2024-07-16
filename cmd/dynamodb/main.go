@@ -105,7 +105,7 @@ func main() {
 	}
 }
 
-const cutoverTime = "2024-07-15T22:20:00-07:00"
+const cutoverTime = "2024-07-16T15:00:00-07:00"
 
 // Facilitates cutting over to a new DDB stream. Before the time all
 // records will be processed in uw1. After the time, all records will be
