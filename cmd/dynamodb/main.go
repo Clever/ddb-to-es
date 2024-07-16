@@ -43,7 +43,7 @@ func Handler(ctx context.Context, event events.DynamoDBEvent) error {
 		if len(errorMsg) > 50 {
 			errorMsg = errorMsg[:50]
 		}
-		log.InfoD("process-records-failure", logger.M{
+		log.ErrorD("process-records-failure", logger.M{
 			"error": errorMsg,
 		})
 	}
@@ -85,10 +85,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	lambda.Start(Handler)
+	if os.Getenv("POD_REGION") == "local" {
+		event := events.DynamoDBEvent{
+			Records: []events.DynamoDBEventRecord{
+				{},
+			},
+		}
+		log.InfoD("running-local", logger.M{
+			"data": event,
+		})
+
+		err := Handler(context.Background(), event)
+		if err != nil {
+			log.ErrorD("failed-local-run", logger.M{"error": err.Error()})
+			os.Exit(1)
+		}
+	} else {
+		lambda.Start(Handler)
+	}
 }
 
-const cutoverTime = "2024-07-15T13:45:00-07:00"
+const cutoverTime = "2024-07-15T22:20:00-07:00"
 
 // Facilitates cutting over to a new DDB stream. Before the time all
 // records will be processed in uw1. After the time, all records will be
