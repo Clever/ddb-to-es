@@ -147,7 +147,12 @@ func processRecords(records []events.DynamoDBEventRecord, db es.DB) ([]es.Doc, e
 
 	docs := []es.Doc{}
 	// TODO: we can parallalize this
-	for _, record := range records {
+	for i, record := range records {
+		if i == 0 {
+			log.InfoD("record-data", logger.M{
+				"time": record.Change.ApproximateCreationDateTime.Format(time.RFC3339),
+			})
+		}
 		skip, err := skipRecord(record)
 		if err != nil {
 			return nil, err
