@@ -18,7 +18,7 @@ import (
 	"github.com/Clever/ddb-to-es/es"
 )
 
-//go:generate $PWD/bin/go-bindata -pkg $GOPACKAGE -o bindata.go kvconfig.yml
+//go:generate ../../bin/go-bindata -pkg $GOPACKAGE -o bindata.go kvconfig.yml
 //go:generate gofmt -w bindata.go
 
 var log = logger.New(os.Getenv("APP_NAME"))
